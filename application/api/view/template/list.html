@@ -1,0 +1,370 @@
+<title>模板列表</title>
+
+<div class="page-header">
+    <h1>
+        模板管理
+        <small>
+            <i class="ace-icon fa fa-angle-double-right"></i>
+            模板列表
+        </small>
+    </h1>
+</div>
+
+<div class="row">
+    <div class="col-xs-12">
+        <!-- PAGE CONTENT BEGINS -->
+
+        <div class="row">
+            <div class="col-xs-12">
+                <button class="btn btn-info" id="template_add">
+                    <i class="ace-icon fa glyphicon glyphicon-plus bigger-120"></i>
+                    新增
+                </button>
+
+                <div class="hr hr-dotted"></div>
+
+                <table id="simple-table" class="table table-bordered table-hover" style="table-layout: fixed;">
+                    <thead>
+                        <tr>
+                            <th class="center col-xs-1">
+                                <label class="pos-rel">
+                                    <input type="checkbox" class="ace">
+                                    <span class="lbl"></span>
+                                </label>
+                            </th>
+                            <th class="col-xs-1 center">序号</th>
+                            <th class="col-xs-2">名称</th>
+                            <th class="col-xs-6">备注</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{volist name="list" id="item" }}
+                        <tr>
+                            <td class="center">
+                                <label class="pos-rel">
+                                    <input type="checkbox" value="{{$item.id}}" class="ace">
+                                    <span class="lbl"></span>
+                                </label>
+                            </td>
+                            <td class="center">
+                                <?php echo $key + ($pagesize * ($page-1))+1 ?>
+                            </td>
+                            <td>
+                                {{$item.name}}
+                            </td>
+                            <td>
+                                {{$item.remark}}
+                            </td>
+                            <td>
+                                <button class="btn btn-info btn-xs" title="编辑" onclick="editTemplate({{$item.id}})"><i
+                                        class="ace-icon fa fa-pencil bigger-120"></i></button>
+                                <button class="btn btn-danger btn-xs" title="删除"
+                                    onclick="delTemplate({{$item.id}},'{{$item.name}}')"><i
+                                        class="ace-icon fa fa-trash-o bigger-120"></i></button>
+                                <button class="btn btn-info btn-xs" title="设计模板" onclick="toDesign({{$item.id}})"><i
+                                        class="ace-icon fa fa-desktop bigger-120"></i></button>
+                            </td>
+                        </tr>
+                        {{/volist}} </tbody>
+                </table>
+                <div class="col-xs-2">
+                    <div class="dataTables_info" id="dynamic-table_info" role="status" aria-live="polite">
+                        {{$pagesize}}条/页,共{{$total}}条
+                    </div>
+                </div>
+
+                <div class="col-xs-6 pull-right">
+                    <div class="dataTables_paginate paging_simple_numbers" id="table_paginate">
+                        {{$paginate}}
+
+                    </div>
+                </div>
+            </div> <!-- /.span -->
+        </div>
+    </div>
+</div>
+
+<!-- 新增弹出框-->
+<div id="template_add_modal" class="modal fade">
+    <div class="modal-dialog" style="position: relative;top:40%;transform: translateY(-50%);min-width: 1024px;">
+        <div class="modal-content">
+            <div class="modal-header no-padding">
+                <div class="table-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
+                        <span class="white">×</span>
+                    </button>
+                    新增模板
+                </div>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal" id="form_template" role="form">
+                    <div class="form-group">
+                        <label class="col-sm-3 control-label no-padding-right" for="name">名称：</label>
+
+                        <div class="col-sm-9">
+                            <input type="text" id="name" name="name" placeholder="模板名称" maxlength="32"
+                                class="col-xs-10">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-3 control-label no-padding-right" for="remark">备注：</label>
+                        <div class="col-sm-9">
+                            <textarea id="remark" name="remark" class="col-xs-10" rows="7"
+                                style="overflow: hidden; word-wrap: break-word; resize: vertical;"
+                                maxlength="250"></textarea>
+                        </div>
+                    </div>
+                </form>
+
+            </div>
+
+            <div class="modal-footer no-margin-top center">
+                <button class="btn btn-sm btn-info" type="button" id="submit_add">
+                    <i class="ace-icon fa fa-check bigger-110"></i>
+                    提交
+                </button>
+                <button class="btn btn-sm btn-danger " data-dismiss="modal">
+                    <i class="ace-icon fa fa-times"></i>
+                    取消
+                </button>
+
+            </div>
+        </div><!-- /.modal-content -->
+    </div>
+</div>
+
+<!-- 编辑弹出框-->
+<div id="template_edit_modal" class="modal fade">
+    <div class="modal-dialog" style="position: relative;top:40%;transform: translateY(-50%);min-width: 1024px;">
+        <div class="modal-content">
+            <div class="modal-header no-padding">
+                <div class="table-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
+                        <span class="white">×</span>
+                    </button>
+                    编辑模板
+                </div>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal" id="form_template_edit" role="form">
+                    <div class="form-group">
+                        <label class="col-sm-3 control-label no-padding-right" for="name">名称：</label>
+
+                        <div class="col-sm-9">
+                            <input type="text" id="edit_name" name="name" placeholder="模板名称" maxlength="32"
+                                class="col-xs-10">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-3 control-label no-padding-right" for="remark">备注：</label>
+                        <div class="col-sm-9">
+                            <textarea id="edit_remark" name="remark" class="col-xs-10" rows="7"
+                                style="overflow: hidden; word-wrap: break-word; resize: vertical;"
+                                maxlength="250"></textarea>
+                        </div>
+                    </div>
+                </form>
+
+            </div>
+
+            <div class="modal-footer no-margin-top center">
+                <input type="hidden" id="edit_id" value="" />
+                <button class="btn btn-sm btn-info" type="button" id="submit_edit">
+                    <i class="ace-icon fa fa-check bigger-110"></i>
+                    提交
+                </button>
+                <button class="btn btn-sm btn-danger " data-dismiss="modal">
+                    <i class="ace-icon fa fa-times"></i>
+                    取消
+                </button>
+
+            </div>
+        </div><!-- /.modal-content -->
+    </div>
+</div>
+
+<script>
+    function toDesign(id) {
+        window.location.href = "#template/design/" + id;
+    }
+    function editTemplate(id) {
+        $.ajax({
+            url: '/api/v1/template/' + id,
+            dataType: 'json',
+            async: false,
+            success: function (res) {
+                if (res.status == 200) {
+                    $('#edit_name').val(res.data.name);
+                    $('#edit_remark').val(res.data.remark);
+                    $('#edit_id').val(id);
+                    $('#template_edit_modal').modal('show');
+                } else {
+                    showTipError(res.msg)
+                }
+            },
+        });
+    }
+    function delTemplate(id, name) {
+        if (parseInt(id) < 1) {
+            showTipError('参数错误');
+            return false;
+        }
+        bootbox.confirm({
+            message: '确认删除(' + name + ')?',
+            buttons: {
+                confirm: {
+                    label: "确认",
+                    className: "btn-primary btn-sm",
+                },
+                cancel: {
+                    label: "取消",
+                    className: "btn-sm",
+                }
+            },
+            callback: function (res) {
+                if (!res) {
+                    return true;
+                }
+                $('#template_add_modal').ace_ajax('post', '/api/v1/template', { id: id }, false, {
+                    dataType: 'json',
+                    method: 'DELETE',
+                    success: function (res) {
+                        if (res.status == 200) {
+                            showTipOk(res.msg)
+                            window.location.reload();
+                        } else {
+                            showTipError(res.msg)
+                        }
+                    },
+                })
+            }
+        })
+    }
+    $(function () {
+        $('#template_add').click(function () {
+            $('#template_add_modal').modal('show');
+        })
+        $('.pagination  li  a').click(function (e) {
+            e.preventDefault();
+            var hash = this.hash;
+            var link = new URL(this.href)
+            window.location.href = hash + link.search;
+            // return false;
+        })
+        $('#form_template').validate({
+            errorElement: 'div',
+            errorClass: 'help-block',
+            focusInvalid: false,
+            ignore: "",
+            rules: {
+                name: {
+                    required: true,
+                },
+            },
+            messages: {
+                name: {
+                    required: "名称不能为空"
+                }
+            },
+            highlight: function (e) {
+                $(e).closest('.form-group').addClass('has-error');
+            },
+            success: function (e) {
+                $(e).closest('.form-group').removeClass('has-error');//.addClass('has-info');
+                $(e).remove();
+            },
+            errorPlacement: function (error, element) {
+                if (element.is('input[type=checkbox]') || element.is('input[type=radio]')) {
+                    var controls = element.closest('div[class*="col-"]');
+                    if (controls.find(':checkbox,:radio').length > 1) controls.append(error);
+                    else error.insertAfter(element.nextAll('.lbl:eq(0)').eq(0));
+                }
+                else if (element.is('.select2')) {
+                    error.insertAfter(element.siblings('[class*="select2-container"]:eq(0)'));
+                }
+                else if (element.is('.chosen-select')) {
+                    error.insertAfter(element.siblings('[class*="chosen-container"]:eq(0)'));
+                }
+                else error.insertAfter(element);
+            }
+        });
+        $('#form_template_edit').validate({
+            errorElement: 'div',
+            errorClass: 'help-block',
+            focusInvalid: false,
+            ignore: "",
+            rules: {
+                name: {
+                    required: true,
+                },
+            },
+            messages: {
+                name: {
+                    required: "名称不能为空"
+                }
+            },
+            highlight: function (e) {
+                $(e).closest('.form-group').addClass('has-error');
+            },
+            success: function (e) {
+                $(e).closest('.form-group').removeClass('has-error');//.addClass('has-info');
+                $(e).remove();
+            },
+            errorPlacement: function (error, element) {
+                if (element.is('input[type=checkbox]') || element.is('input[type=radio]')) {
+                    var controls = element.closest('div[class*="col-"]');
+                    if (controls.find(':checkbox,:radio').length > 1) controls.append(error);
+                    else error.insertAfter(element.nextAll('.lbl:eq(0)').eq(0));
+                }
+                else if (element.is('.select2')) {
+                    error.insertAfter(element.siblings('[class*="select2-container"]:eq(0)'));
+                }
+                else if (element.is('.chosen-select')) {
+                    error.insertAfter(element.siblings('[class*="chosen-container"]:eq(0)'));
+                }
+                else error.insertAfter(element);
+            }
+        });
+        //添加
+        $('#submit_add').click(function () {
+            if (!$('#form_template').valid()) {
+                return false;
+            }
+            var data = { name: $('#name').val(), 'remark': $('#remark').val() };
+            $('#template_add_modal').ace_ajax('post', '/api/v1/template', data, false, {
+                dataType: 'json',
+                success: function (res) {
+                    if (res.status == 200) {
+                        $('#template_add_modal').modal('hide');
+                        $('.modal-backdrop').remove();
+                        showTipOk(res.msg)
+                        window.location.reload();
+                    } else {
+                        showTipError(res.msg)
+                    }
+                },
+            });
+        })
+        $('#submit_edit').click(function () {
+            if (!$('#form_template_edit').valid()) {
+                return false;
+            }
+            var data = { name: $('#edit_name').val(), remark: $('#edit_remark').val() };
+            $('#template_edit_modal').ace_ajax('post', '/api/v1/template/' + $('#edit_id').val(), data, false, {
+                dataType: 'json',
+                method: 'PUT',
+                success: function (res) {
+                    if (res.status == 200) {
+                        $('#template_edit_modal').modal('hide');
+                        $('.modal-backdrop').remove();
+                        showTipOk(res.msg)
+                        window.location.reload();
+                    } else {
+                        showTipError(res.msg)
+                    }
+                },
+            });
+        })
+    });
+</script>

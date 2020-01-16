@@ -1,0 +1,304 @@
+<title>模板设计</title>
+<div class="page-header">
+    <h1> 模板管理 <small>
+            <i class="ace-icon fa fa-angle-double-right"></i> 模板设计 </small>
+    </h1>
+</div>
+<div class="row">
+    <div class="col-xs-12">
+        <!-- PAGE CONTENT BEGINS -->
+        <div class="row">
+            <div class="col-xs-12">
+
+                <button class="btn btn-info" id="field_add">
+                    <i class="ace-icon fa glyphicon glyphicon-plus bigger-120"></i> 新增字段 </button>
+                <div class="hr hr-dotted"></div>
+                <form class="form-horizontal col-xs-9 widget-box " id="form_template" role="form">
+                    <h3 class="lighter block green center"> {{$info.name}} </h3>
+                    <div class="row">
+                        <label class="col-sm-3 control-label no-padding-right" for="name">名称：</label>
+                        <div class="col-sm-6">
+
+                            <input class="col-xs-9 form-control" type="text" id="name" name="name" placeholder="模板名称" maxlength="32" />
+                        </div>
+                    </div>
+                    <div class="space-4"></div>
+                    <div class="row">
+                        <label class="col-sm-3 control-label no-padding-right" for="remark">备注：</label>
+                        <div class="col-sm-6">
+                            <textarea class="form-control" id="remark" name="remark" rows="4" style="overflow: hidden; word-wrap: break-word; resize: vertical;"
+                                maxlength="250"></textarea>
+                        </div>
+                    </div>
+                    <div class="space-4"></div>
+                    <div class="clearfix form-actions">
+                        <div class="col-md-offset-3 col-md-9">
+
+                            <button class="btn btn-info" type="button">
+                                <i class="ace-icon fa fa-check bigger-110"></i> 提交 </button> &nbsp; &nbsp; &nbsp;
+
+                            <button class="btn" type="reset">
+                                <i class="ace-icon fa fa-undo bigger-110"></i> 返回 </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- 增加字段弹出框-->
+<div id="template_add_modal" class="modal fade">
+    <div class="modal-dialog" style="position: relative;top:40%;transform: translateY(-50%);min-width: 1024px;">
+        <div class="modal-content">
+            <div class="modal-header no-padding">
+                <div class="table-header">
+
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
+
+                        <span class="white">×</span>
+                    </button> 新增字段 </div>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal" id="form_field_add" role="form">
+                    <div class="form-group">
+                        <label class="col-sm-3 control-label no-padding-right" for="name">名称：</label>
+                        <div class="col-sm-9">
+
+                            <input type="text" id="name" name="name" placeholder="字段名称" maxlength="32" class="col-xs-10">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-3 control-label no-padding-right" for="name">数据类型：</label>
+                        <div class="col-sm-9">
+                            <select id="dataType" name="dataType"> {{volist name="dataType" id="item" }} <option value="{{$key}}"> {{$item}} </option> {{/volist}} </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-3 control-label no-padding-right" for="name">可用值：</label>
+                        <div class="col-sm-9">
+
+                            <input type="text" id="name" name="name" placeholder="是|否|其它" maxlength="32" class="col-xs-10">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-3 control-label no-padding-right" for="name">排序：</label>
+                        <div class="col-sm-9">
+                            <input type="text" id="sort" name="sort" placeholder="排序" value="10" class="col-xs-1">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-3 control-label no-padding-right" for="isTitle">设为展示列：</label>
+                        <div class="col-sm-9">
+                            <label>
+                                <input name="isTitle" class="ace ace-switch ace-switch-6" type="checkbox">
+                                <span class="lbl"></span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-3 control-label no-padding-right" for="isReuqire">是否必填：</label>
+                        <div class="col-sm-9">
+                            <label>
+                                <input name="isReuqire" class="ace ace-switch ace-switch-6" type="checkbox">
+                                <span class="lbl"></span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-3 control-label no-padding-right" for="isFilter">作为搜索项：</label>
+                        <div class="col-sm-9">
+                            <label>
+                                <input name="isFilter" class="ace ace-switch ace-switch-6" type="checkbox">
+                                <span class="lbl"></span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-3 control-label no-padding-right" for="remark">备注：</label>
+                        <div class="col-sm-9">
+                            <textarea id="remark" name="remark" class="col-xs-10" rows="7" style="overflow: hidden; word-wrap: break-word; resize: vertical;"
+                                maxlength="250"></textarea>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer no-margin-top center">
+
+                <button class="btn btn-sm btn-info" type="button" id="submit_add">
+                    <i class="ace-icon fa fa-check bigger-110"></i> 提交 </button>
+
+                <button class="btn btn-sm btn-danger " data-dismiss="modal">
+                    <i class="ace-icon fa fa-times"></i> 取消 </button>
+            </div>
+        </div><!-- /.modal-content -->
+    </div>
+</div>
+<script>
+
+    function editTemplate(id) {
+        $.ajax({
+            url: '/api/v1/template/' + id,
+            dataType: 'json',
+            async: false,
+            success: function (res) {
+                if (res.status == 200) {
+                    $('#edit_name').val(res.data.name);
+                    $('#edit_remark').val(res.data.remark);
+                    $('#edit_id').val(id);
+                    $('#template_edit_modal').modal('show');
+                } else {
+                    showTipError(res.msg)
+                }
+            },
+        });
+    }
+    function delTemplate(id, name) {
+        if (parseInt(id) < 1) {
+            showTipError('参数错误');
+            return false;
+        }
+        if (confirm('确认删除(' + name + ')')) {
+            $('#template_add_modal').ace_ajax('post', '/api/v1/template', { id: id }, false, {
+                dataType: 'json',
+                method: 'DELETE',
+                success: function (res) {
+                    if (res.status == 200) {
+                        showTipOk(res.msg)
+                        $('.page-ajax-content').ace_ajax('reload');
+                    } else {
+                        showTipError(res.msg)
+                    }
+                },
+            });
+        }
+    }
+    $(function () {
+
+
+        $('#field_add').click(function () {
+            $('#form_field_add')[0].reset();
+            $('#template_add_modal').modal('show');
+        })
+        $('.pagination  li  a').click(function (e) {
+            e.preventDefault();
+            var hash = this.hash;
+            var link = new URL(this.href)
+            window.location.href = hash + link.search;
+            // return false;
+        })
+        $('#form_field_add').validate({
+            errorElement: 'div',
+            errorClass: 'help-block',
+            focusInvalid: false,
+            ignore: "",
+            rules: {
+                name: {
+                    required: true,
+                },
+            },
+            messages: {
+                name: {
+                    required: "名称不能为空"
+                }
+            },
+            highlight: function (e) {
+                $(e).closest('.form-group').addClass('has-error');
+            },
+            success: function (e) {
+                $(e).closest('.form-group').removeClass('has-error');//.addClass('has-info');
+                $(e).remove();
+            },
+            errorPlacement: function (error, element) {
+                if (element.is('input[type=checkbox]') || element.is('input[type=radio]')) {
+                    var controls = element.closest('div[class*="col-"]');
+                    if (controls.find(':checkbox,:radio').length > 1) controls.append(error);
+                    else error.insertAfter(element.nextAll('.lbl:eq(0)').eq(0));
+                }
+                else if (element.is('.select2')) {
+                    error.insertAfter(element.siblings('[class*="select2-container"]:eq(0)'));
+                }
+                else if (element.is('.chosen-select')) {
+                    error.insertAfter(element.siblings('[class*="chosen-container"]:eq(0)'));
+                }
+                else error.insertAfter(element);
+            }
+        });
+        $('#form_field_edit').validate({
+            errorElement: 'div',
+            errorClass: 'help-block',
+            focusInvalid: false,
+            ignore: "",
+            rules: {
+                name: {
+                    required: true,
+                },
+            },
+            messages: {
+                name: {
+                    required: "名称不能为空"
+                }
+            },
+            highlight: function (e) {
+                $(e).closest('.form-group').addClass('has-error');
+            },
+            success: function (e) {
+                $(e).closest('.form-group').removeClass('has-error');//.addClass('has-info');
+                $(e).remove();
+            },
+            errorPlacement: function (error, element) {
+                if (element.is('input[type=checkbox]') || element.is('input[type=radio]')) {
+                    var controls = element.closest('div[class*="col-"]');
+                    if (controls.find(':checkbox,:radio').length > 1) controls.append(error);
+                    else error.insertAfter(element.nextAll('.lbl:eq(0)').eq(0));
+                }
+                else if (element.is('.select2')) {
+                    error.insertAfter(element.siblings('[class*="select2-container"]:eq(0)'));
+                }
+                else if (element.is('.chosen-select')) {
+                    error.insertAfter(element.siblings('[class*="chosen-container"]:eq(0)'));
+                }
+                else error.insertAfter(element);
+            }
+        });
+        //添加
+        $('#submit_add').click(function () {
+            if (!$('#form_template').valid()) {
+                return false;
+            }
+            var data = { name: $('#name').val(), 'remark': $('#remark').val() };
+            $('#template_add_modal').ace_ajax('post', '/api/v1/template', data, false, {
+                dataType: 'json',
+                success: function (res) {
+                    if (res.status == 200) {
+                        $('#template_add_modal').modal('hide');
+                        $('.modal-backdrop').remove();
+                        showTipOk(res.msg)
+                        $('.page-ajax-content').ace_ajax('reload');
+                    } else {
+                        showTipError(res.msg)
+                    }
+                },
+            });
+        })
+        $('#submit_edit').click(function () {
+            if (!$('#form_template_edit').valid()) {
+                return false;
+            }
+            var data = { name: $('#edit_name').val(), remark: $('#edit_remark').val() };
+            $('#template_edit_modal').ace_ajax('post', '/api/v1/template/' + $('#edit_id').val(), data, false, {
+                dataType: 'json',
+                method: 'PUT',
+                success: function (res) {
+                    if (res.status == 200) {
+                        $('#template_edit_modal').modal('hide');
+                        $('.modal-backdrop').remove();
+                        showTipOk(res.msg)
+                        $('.page-ajax-content').ace_ajax('reload');
+                    } else {
+                        showTipError(res.msg)
+                    }
+                },
+            });
+        })
+    });
+</script>
