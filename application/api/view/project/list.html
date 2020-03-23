@@ -1,11 +1,12 @@
-<title>模板列表</title>
+
+<title>项目管理</title>
 
 <div class="page-header">
     <h1>
-        模板管理
+        项目管理
         <small>
             <i class="ace-icon fa fa-angle-double-right"></i>
-            模板列表
+            项目列表
         </small>
     </h1>
 </div>
@@ -16,7 +17,7 @@
 
         <div class="row">
             <div class="col-xs-12">
-                <button class="btn btn-info" id="template_add">
+                <button class="btn btn-info" id="Project_add">
                     <i class="ace-icon fa glyphicon glyphicon-plus bigger-120"></i>
                     新增
                 </button>
@@ -34,7 +35,7 @@
                             </th>
                             <th class="col-xs-1 center">序号</th>
                             <th class="col-xs-2 center">名称</th>
-                            <th class="col-xs-1 center">字段数</th>
+                            <th class="col-xs-1 center">状态</th>
                             <th class="col-xs-2 center">创建时间</th>
                             <th class="col-xs-3 center">备注</th>
                             <th>操作</th>
@@ -55,9 +56,11 @@
                             <td class="center">
                                 {{$item.name}}
                             </td>
+                            
                             <td class="center">
-                                {{$item.field_count}}
+                                {{$item.status ? '显示' : '隐藏'}}
                             </td>
+
                             <td class="center">
                                 {{$item.create_time}}
                             </td>
@@ -65,11 +68,15 @@
                                 {{$item.remark}}
                             </td>
                             <td>
-                                <button class="btn btn-info btn-xs" title="编辑" onclick="editTemplate({{$item.id}})">编辑</button>
+                                <button class="btn btn-info btn-xs" title="编辑" onclick="editProject({{$item.id}})">编辑</button>
                             
-                                <button class="btn btn-success btn-xs" title="设计模板" onclick="toDesign({{$item.id}})">设计</button>
-                                <button class="btn btn-danger btn-xs" title="删除" onclick="delTemplate({{$item.id}},'{{$item.name}}')">删除</button>
-                                <button class="btn btn-yellow btn-xs" title="分享" >分享提交地址</button>
+                                <button class="btn btn-success btn-xs" title="设计项目流程" onclick="toDesign({{$item.id}})">设计流程</button>
+                                {{if $item.status}}
+                                    <button class="btn btn-danger btn-xs" title="删除" onclick="hideProject({{$item.id}},'{{$item.name}}')">隐藏</button>
+                                {{else/}}
+                                    <button class="btn btn-danger btn-xs" title="恢复" onclick="showProject({{$item.id}},'{{$item.name}}')">恢复</button>
+                                {{/if}}
+                                <button class="btn btn-yellow btn-xs" title="分享" >分享地址</button>
                             </td>
                         </tr>
                         {{/volist}} </tbody>
@@ -92,7 +99,7 @@
 </div>
 
 <!-- 新增弹出框-->
-<div id="template_add_modal" class="modal fade">
+<div id="Project_add_modal" class="modal fade">
     <div class="modal-dialog" style="position: relative;top:40%;transform: translateY(-50%);min-width: 1024px;">
         <div class="modal-content">
             <div class="modal-header no-padding">
@@ -100,19 +107,64 @@
                     <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
                         <span class="white">×</span>
                     </button>
-                    新增模板
+                    新增项目
                 </div>
             </div>
             <div class="modal-body">
-                <form class="form-horizontal" id="form_template" role="form">
+                <form class="form-horizontal" id="form_Project" role="form">
                     <div class="form-group">
-                        <label class="col-sm-3 control-label no-padding-right" for="name">名称：</label>
+                        <label class="col-sm-3 control-label no-padding-right" for="name"><i style="color: red;">*</i>项目名称：</label>
 
                         <div class="col-sm-9">
-                            <input type="text" id="name" name="name" placeholder="模板名称" maxlength="32"
+                            <input type="text" id="name" name="name" placeholder="项目名称" maxlength="32"
                                 class="col-xs-10">
                         </div>
                     </div>
+                    <div class="form-group">
+                        <label class="col-sm-3 control-label no-padding-right" for="name"><i style="color: red;">*</i>使用的模板：</label>
+                        <div class="col-sm-8 checkbox">
+                        {{volist name="temps" id="temp"}}
+                        <div class="col-sm-4">
+                        <label>
+                            <input name="temps[]" type="checkbox" value="{{$temp.id}}" class="ace">
+                            <span class="lbl">{{$temp.name}}</span>
+                        </label>
+                        </div>
+                        {{/volist}}
+                    </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-3 control-label no-padding-right" for="name"><i style="color: red;">*</i>管理人员角色：</label>
+                        <div class="col-sm-8 checkbox">
+                            <span class="red">管理人员可查看及审批该项目所有数据</span><br/>
+                        {{volist name="roles" id="role"}}
+                        <div class="col-sm-4">
+                        <label>
+                            <input name="admin_roles[]" type="checkbox" value="{{$role.id}}" class="ace">
+                            <span class="lbl">{{$role.name}}</span>
+                        </label>
+                        </div>
+                        
+                        {{/volist}}
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-3 control-label no-padding-right" for="name" id="used_role">参与的角色：</label>
+                        <div class="col-sm-8 checkbox">
+                            <span class="red">不选择则所有人员可用</span><br/>
+                            
+                        {{volist name="roles" id="role"}}
+                        <div class="col-sm-4">
+                        <label>
+                            <input name="roles[]" type="checkbox" value="{{$role.id}}" class="ace">
+                            <span class="lbl">{{$role.name}}</span>
+                        </label>
+                            </div>
+                        {{/volist}}
+                        
+                        </div>
+                    </div>
+                    
                     <div class="form-group">
                         <label class="col-sm-3 control-label no-padding-right" for="remark">备注：</label>
                         <div class="col-sm-9">
@@ -141,7 +193,7 @@
 </div>
 
 <!-- 编辑弹出框-->
-<div id="template_edit_modal" class="modal fade">
+<div id="Project_edit_modal" class="modal fade">
     <div class="modal-dialog" style="position: relative;top:40%;transform: translateY(-50%);min-width: 1024px;">
         <div class="modal-content">
             <div class="modal-header no-padding">
@@ -149,17 +201,60 @@
                     <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
                         <span class="white">×</span>
                     </button>
-                    编辑模板
+                    编辑项目
                 </div>
             </div>
             <div class="modal-body">
-                <form class="form-horizontal" id="form_template_edit" role="form">
+                <form class="form-horizontal" id="form_Project_edit" role="form">
                     <div class="form-group">
-                        <label class="col-sm-3 control-label no-padding-right" for="name">名称：</label>
+                        <label class="col-sm-3 control-label no-padding-right" for="name"><i style="color: red;">*</i>项目名称：</label>
 
                         <div class="col-sm-9">
-                            <input type="text" id="edit_name" name="name" placeholder="模板名称" maxlength="32"
+                            <input type="text" id="edit_name" name="name" placeholder="项目名称" maxlength="32"
                                 class="col-xs-10">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-3 control-label no-padding-right" for="name"><i style="color: red;">*</i>使用的模板：</label>
+                        <div class="col-sm-8 checkbox">
+                        {{volist name="temps" id="temp"}}
+                        <div class="col-sm-4">
+                        <label>
+                            <input name="edit_temps[]" type="checkbox" id="temp_{{$temp.id}}" value="{{$temp.id}}" class="ace">
+                            <span class="lbl">{{$temp.name}}</span>
+                        </label>
+                         
+                        </div>
+                        {{/volist}}
+                    </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-3 control-label no-padding-right" for="name"><i style="color: red;">*</i>管理人员角色：</label>
+                        <div class="col-sm-8 checkbox">
+                            <span class="red">管理人员可查看及审批该项目所有数据</span><br/>
+                        {{volist name="roles" id="role"}}
+                        <div class="col-sm-4">
+                        <label>
+                            <input name="edit_admin_roles[]" type="checkbox" id="adminrole_{{$role.id}}"  value="{{$role.id}}" class="ace">
+                            <span class="lbl">{{$role.name}}</span>
+                        </label>
+                        </div>
+                        {{/volist}}
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-3 control-label no-padding-right" for="name" id="used_role">参与的角色：</label>
+                        <div class="col-sm-8 checkbox">
+                            <span class="red">不选则所有人员可用</span>
+                            <br/>
+                        {{volist name="roles" id="role"}}
+                        <div class="col-sm-4">
+                        <label>
+                            <input name="edit_roles[]" type="checkbox" id="role_{{$role.id}}" value="{{$role.id}}" class="ace">
+                            <span class="lbl">{{$role.name}}</span>
+                        </label>
+                        </div>
+                        {{/volist}}
                         </div>
                     </div>
                     <div class="form-group">
@@ -175,7 +270,6 @@
             </div>
 
             <div class="modal-footer no-margin-top center">
-                <input type="hidden" id="edit_id" value="" />
                 <button class="btn btn-sm btn-info" type="button" id="submit_edit">
                     <i class="ace-icon fa fa-check bigger-110"></i>
                     提交
@@ -191,33 +285,67 @@
 </div>
 
 <script>
+    var edit_id = 0;
     function toDesign(id) {
-        window.location.href = "/api/v1/template/design/" + id;
+        window.location.href = "/api/v1/project/design/" + id;
     }
-    function editTemplate(id) {
+    function editProject(id) {
         $.ajax({
-            url: '/api/v1/template/' + id,
+            url: '/api/v1/project/' + id,
             dataType: 'json',
             async: false,
             success: function (res) {
                 if (res.status == 200) {
                     $('#edit_name').val(res.data.name);
+                    if(res.data.temps){
+                        res.data.temps.split(',').forEach(function(v,i){
+                            if(parseInt(v) < 1){
+                                return
+                            }
+                            console.log(v);
+                            $('#temp_'+v).attr({checked:true});
+
+                        });
+                    }
+                    if(res.data.roles){
+                        res.data.roles.split(',').forEach(function(v,i){
+                            if(parseInt(v) < 1){
+                                return
+                            }
+                            $('#role_'+v).attr({checked:true});
+
+                        });
+                    }
+                    if(res.data.admin_roles){
+                        res.data.admin_roles.split(',').forEach(function(v,i){
+                            if(parseInt(v) < 1){
+                                return
+                            }
+                            $('#adminrole_'+v).attr({checked:true});
+
+                        });
+                    }
                     $('#edit_remark').val(res.data.remark);
-                    $('#edit_id').val(id);
-                    $('#template_edit_modal').modal('show');
+                    edit_id = id;
+                    $('#Project_edit_modal').modal('show');
                 } else {
                     showTipError(res.msg)
                 }
             },
         });
     }
-    function delTemplate(id, name) {
+    function showProject(id,name){
+        hideProject(id,name,1);
+    }
+    function hideProject(id, name,status) {
         if (parseInt(id) < 1) {
             showTipError('参数错误');
             return false;
         }
+        status = status == undefined ? 0 : 1;
+        var text = status ? '恢复' :'隐藏';
         bootbox.confirm({
-            message: '确认删除(' + name + ')?',
+            message: '确认'+text+'(' + name + ')?',
             buttons: {
                 confirm: {
                     label: "确认",
@@ -232,7 +360,7 @@
                 if (!res) {
                     return true;
                 }
-                $('#template_add_modal').ace_ajax('post', '/api/v1/template', { id: id }, false, {
+                $('.page-content').ace_ajax('post', '/api/v1/project', { id: id ,status:status}, false, {
                     dataType: 'json',
                     method: 'DELETE',
                     success: function (res) {
@@ -248,10 +376,10 @@
         })
     }
     $(function () {
-        $('#template_add').click(function () {
-            $('#template_add_modal').modal('show');
+        $('#Project_add').click(function () {
+            $('#Project_add_modal').modal('show');
         });
-        $('#form_template').validate({
+        $('#form_Project').validate({
             errorElement: 'div',
             errorClass: 'help-block',
             focusInvalid: false,
@@ -260,10 +388,22 @@
                 name: {
                     required: true,
                 },
+                "admin_roles[]":{
+                    required:true
+                },
+                "temps[]":{
+                    required:true
+                }
             },
             messages: {
                 name: {
-                    required: "名称不能为空"
+                    required: "项目名称不能为空"
+                },
+                "admin_roles[]":{
+                    required:"请选择管理角色"
+                },
+                "temps[]":{
+                    required:"请选择模板"
                 }
             },
             highlight: function (e) {
@@ -288,7 +428,7 @@
                 else error.insertAfter(element);
             }
         });
-        $('#form_template_edit').validate({
+        $('#form_Project_edit').validate({
             errorElement: 'div',
             errorClass: 'help-block',
             focusInvalid: false,
@@ -297,10 +437,22 @@
                 name: {
                     required: true,
                 },
+                "edit_admin_roles[]":{
+                    required:true
+                },
+                "edit_temps[]":{
+                    required:true
+                }
             },
             messages: {
                 name: {
-                    required: "名称不能为空"
+                    required: "项目名称不能为空"
+                },
+                "edit_admin_roles[]":{
+                    required:"请选择管理角色"
+                },
+                "edit_temps[]":{
+                    required:"请选择模板"
                 }
             },
             highlight: function (e) {
@@ -327,16 +479,33 @@
         });
         //添加
         $('#submit_add').click(function () {
-            if (!$('#form_template').valid()) {
+            if (!$('#form_Project').valid()) {
                 return false;
             }
-            var data = { name: $('#name').val(), 'remark': $('#remark').val() };
-            $('#template_add_modal').ace_ajax('post', '/api/v1/template', data, false, {
+            var temps = [];
+            var admin_roles=[];
+            var roles = [];
+            $('input[name="roles[]"]:checked').each(function(){
+                roles.push($(this).val())
+            })
+            $('input[name="admin_roles[]"]:checked').each(function(){
+                admin_roles.push($(this).val())
+            })
+            $('input[name="temps[]"]:checked').each(function(){
+                temps.push($(this).val())
+            })
+
+            var data = { 
+            name: $('#name').val(), 
+            roles:roles.join(','),
+            admin_roles:admin_roles.join(','),
+            temps:temps.join(','),
+            remark:$('#remark').val() 
+            };
+            $('#Project_add_modal').ace_ajax('post', '/api/v1/project', data, false, {
                 dataType: 'json',
                 success: function (res) {
                     if (res.status == 200) {
-                        $('#template_add_modal').modal('hide');
-                        $('.modal-backdrop').remove();
                         showTipOk(res.msg)
                         window.location.reload();
                     } else {
@@ -346,17 +515,37 @@
             });
         })
         $('#submit_edit').click(function () {
-            if (!$('#form_template_edit').valid()) {
+            if (!$('#form_Project_edit').valid()) {
                 return false;
             }
-            var data = { name: $('#edit_name').val(), remark: $('#edit_remark').val() };
-            $('#template_edit_modal').ace_ajax('post', '/api/v1/template/' + $('#edit_id').val(), data, false, {
+            var temps = [];
+            var admin_roles=[];
+            var roles = [];
+            $('input[name="edit_roles[]"]:checked').each(function(){
+                roles.push($(this).val())
+            })
+            console.log('roles',roles)
+            $('input[name="edit_admin_roles[]"]:checked').each(function(){
+                admin_roles.push($(this).val())
+            })
+            console.log('admin_roles',admin_roles)
+            $('input[name="edit_temps[]"]:checked').each(function(){
+                temps.push($(this).val())
+            })
+            console.log('edit_temps',temps)
+
+            var data = { 
+            name: $('#edit_name').val(), 
+            roles:roles.join(','),
+            admin_roles:admin_roles.join(','),
+            temps:temps.join(','),
+            remark:$('#edit_remark').val() 
+            };
+            $('#Project_edit_modal').ace_ajax('post', '/api/v1/project/' + edit_id, data, false, {
                 dataType: 'json',
                 method: 'PUT',
                 success: function (res) {
                     if (res.status == 200) {
-                        $('#template_edit_modal').modal('hide');
-                        $('.modal-backdrop').remove();
                         showTipOk(res.msg)
                         window.location.reload();
                     } else {

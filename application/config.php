@@ -24,7 +24,7 @@ return [
     // 是否支持多模块
     'app_multi_module'       => true,
     // 入口自动绑定模块
-    'auto_bind_module'       => false,
+    'auto_bind_module'       => true,
     // 注册的根命名空间
     'root_namespace'         => [],
     // 扩展函数文件
@@ -137,9 +137,9 @@ return [
         'taglib_begin' => '{{',
         // 标签库标签结束标记
         'taglib_end'   => '}}',
-
-        'layout_on' => false,
+        'layout_on' => true,
         'layout_name' => 'layout',
+        'tpl_cache' => false,
     ],
 
     // 视图输出字符串内容替换
@@ -175,6 +175,7 @@ return [
         'file_size' => 4*1024*1024, 
         // 日志记录级别
         'level' => ['error','sql','info'],
+        'apart_level' => ['wsServer','sql']
     ],
 
     // +----------------------------------------------------------------------
@@ -195,7 +196,7 @@ return [
         // 缓存保存目录
         'path'   => CACHE_PATH,
         // 缓存前缀
-        'prefix' => '',
+        'prefix' => 'dt',
         // 缓存有效期 0表示永久缓存
         'expire' => 3600,
     ],
@@ -211,10 +212,9 @@ return [
         // SESSION 前缀
         'prefix'         => 'think',
         // 驱动方式 支持redis memcache memcached
-        'type'           => 'file',
+        'type'           => '',
         // 是否自动开启 SESSION
         'auto_start'     => true,
-
         'expire'       => 7200, // 有效期(秒)
         //'timeout'      => 0, // 超时时间(秒)
         'session_name' => 'df_', // sessionkey前缀

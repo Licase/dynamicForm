@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<meta charset="utf-8" content="html/text;charset=utf-8">
+<head>
+	<title>用户人工服务</title>
+	<script type="text/javascript" src="/html/components/jquery.min.js"></script>
+	<script>localdebug=0</script>
+	<script type="text/javascript" src="/html/assets/js/x_debug.js"></script>
+	
+	<link rel="stylesheet" href="./wsServer/wsServer.css" />
+</head>
+<body>
+
+<div class="page-header">人工客服咨询</div>
+<div class="page-content">
+	<div id="msgbox" class="msgbox msgbox-client"></div>
+	<div class="sendbox-client">
+		<textarea name="text" id="text" maxlength="255"></textarea>
+		<span class="remain">0/255</span>
+		<input type="button" class="send" id="send" value="发送">
+	</div>
+</div>
+<script type="text/javascript" src="./wsServer/wsServer.js"></script>
+<script type="text/javascript">
+	var name = getCookie('user_name');
+	if(name == null || name == 'null'){
+		name ="匿名用户" + Math.round(Math.random()*100);
+		setCookie('user_name',name,0);
+	}
+	name = unescape(name);
+var info = {name:name,uid:getUuid(),role:'user'};
+var wshost = window.location.hostname;
+// var a = document.getElementById('msgbox');
+// 	a.innerHTML += "ws://"+wshost+":8090";
+try{
+	$('#send').click(function(){
+		sendMsg(0);
+	});
+ 	$('#text').on('keyup',function(e){
+		var now = $(this).val().length;
+		var limit = parseInt($(this).attr('maxlength') );
+		if(now > limit){
+			e.preventDefault();
+			return false;
+		}
+		$('.remain').html(now+'/'+limit);
+ 	});
+	var wshost = window.location.hostname;
+	var wsObj = new WsServer("ws://"+wshost+":8090");
+	$('#text').val('').focus();
+}catch(error){
+	var a = document.getElementById('msgbox');
+	a.innerHTML += error.message;
+}
+
+</script>
+</body>
+</html>

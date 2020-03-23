@@ -1,11 +1,12 @@
-<title>模板列表</title>
+
+<title>角色管理</title>
 
 <div class="page-header">
     <h1>
-        模板管理
+        角色管理
         <small>
             <i class="ace-icon fa fa-angle-double-right"></i>
-            模板列表
+            角色列表
         </small>
     </h1>
 </div>
@@ -16,7 +17,7 @@
 
         <div class="row">
             <div class="col-xs-12">
-                <button class="btn btn-info" id="template_add">
+                <button class="btn btn-info" id="role_add">
                     <i class="ace-icon fa glyphicon glyphicon-plus bigger-120"></i>
                     新增
                 </button>
@@ -34,7 +35,6 @@
                             </th>
                             <th class="col-xs-1 center">序号</th>
                             <th class="col-xs-2 center">名称</th>
-                            <th class="col-xs-1 center">字段数</th>
                             <th class="col-xs-2 center">创建时间</th>
                             <th class="col-xs-3 center">备注</th>
                             <th>操作</th>
@@ -56,20 +56,16 @@
                                 {{$item.name}}
                             </td>
                             <td class="center">
-                                {{$item.field_count}}
-                            </td>
-                            <td class="center">
                                 {{$item.create_time}}
                             </td>
                             <td class="center">
                                 {{$item.remark}}
                             </td>
                             <td>
-                                <button class="btn btn-info btn-xs" title="编辑" onclick="editTemplate({{$item.id}})">编辑</button>
+                                <button class="btn btn-info btn-xs" title="编辑" onclick="editRole({{$item.id}})">编辑</button>
                             
-                                <button class="btn btn-success btn-xs" title="设计模板" onclick="toDesign({{$item.id}})">设计</button>
-                                <button class="btn btn-danger btn-xs" title="删除" onclick="delTemplate({{$item.id}},'{{$item.name}}')">删除</button>
-                                <button class="btn btn-yellow btn-xs" title="分享" >分享提交地址</button>
+                                <button class="btn btn-danger btn-xs" title="删除" onclick="delRole({{$item.id}},'{{$item.name}}')">删除</button>
+                               
                             </td>
                         </tr>
                         {{/volist}} </tbody>
@@ -92,7 +88,7 @@
 </div>
 
 <!-- 新增弹出框-->
-<div id="template_add_modal" class="modal fade">
+<div id="role_add_modal" class="modal fade">
     <div class="modal-dialog" style="position: relative;top:40%;transform: translateY(-50%);min-width: 1024px;">
         <div class="modal-content">
             <div class="modal-header no-padding">
@@ -100,16 +96,16 @@
                     <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
                         <span class="white">×</span>
                     </button>
-                    新增模板
+                    新增角色
                 </div>
             </div>
             <div class="modal-body">
-                <form class="form-horizontal" id="form_template" role="form">
+                <form class="form-horizontal" id="form_role" role="form">
                     <div class="form-group">
                         <label class="col-sm-3 control-label no-padding-right" for="name">名称：</label>
 
                         <div class="col-sm-9">
-                            <input type="text" id="name" name="name" placeholder="模板名称" maxlength="32"
+                            <input type="text" id="name" name="name" placeholder="角色名称" maxlength="32"
                                 class="col-xs-10">
                         </div>
                     </div>
@@ -141,7 +137,7 @@
 </div>
 
 <!-- 编辑弹出框-->
-<div id="template_edit_modal" class="modal fade">
+<div id="role_edit_modal" class="modal fade">
     <div class="modal-dialog" style="position: relative;top:40%;transform: translateY(-50%);min-width: 1024px;">
         <div class="modal-content">
             <div class="modal-header no-padding">
@@ -149,16 +145,16 @@
                     <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
                         <span class="white">×</span>
                     </button>
-                    编辑模板
+                    编辑角色
                 </div>
             </div>
             <div class="modal-body">
-                <form class="form-horizontal" id="form_template_edit" role="form">
+                <form class="form-horizontal" id="form_role_edit" role="form">
                     <div class="form-group">
                         <label class="col-sm-3 control-label no-padding-right" for="name">名称：</label>
 
                         <div class="col-sm-9">
-                            <input type="text" id="edit_name" name="name" placeholder="模板名称" maxlength="32"
+                            <input type="text" id="edit_name" name="name" placeholder="角色名称" maxlength="32"
                                 class="col-xs-10">
                         </div>
                     </div>
@@ -175,7 +171,6 @@
             </div>
 
             <div class="modal-footer no-margin-top center">
-                <input type="hidden" id="edit_id" value="" />
                 <button class="btn btn-sm btn-info" type="button" id="submit_edit">
                     <i class="ace-icon fa fa-check bigger-110"></i>
                     提交
@@ -191,31 +186,32 @@
 </div>
 
 <script>
-    function toDesign(id) {
-        window.location.href = "/api/v1/template/design/" + id;
-    }
-    function editTemplate(id) {
+    var edit_id = 0;
+
+    function editRole(id) {
         $.ajax({
-            url: '/api/v1/template/' + id,
+            url: '/api/v1/role/' + id,
             dataType: 'json',
             async: false,
             success: function (res) {
                 if (res.status == 200) {
                     $('#edit_name').val(res.data.name);
                     $('#edit_remark').val(res.data.remark);
-                    $('#edit_id').val(id);
-                    $('#template_edit_modal').modal('show');
+                    edit_id = id;
+                    $('#role_edit_modal').modal('show');
                 } else {
                     showTipError(res.msg)
                 }
             },
         });
     }
-    function delTemplate(id, name) {
+
+    function delRole(id, name,status) {
         if (parseInt(id) < 1) {
             showTipError('参数错误');
             return false;
         }
+       
         bootbox.confirm({
             message: '确认删除(' + name + ')?',
             buttons: {
@@ -232,7 +228,7 @@
                 if (!res) {
                     return true;
                 }
-                $('#template_add_modal').ace_ajax('post', '/api/v1/template', { id: id }, false, {
+                $('.page-content').ace_ajax('post', '/api/v1/role', { id: id }, false, {
                     dataType: 'json',
                     method: 'DELETE',
                     success: function (res) {
@@ -248,10 +244,10 @@
         })
     }
     $(function () {
-        $('#template_add').click(function () {
-            $('#template_add_modal').modal('show');
+        $('#role_add').click(function () {
+            $('#role_add_modal').modal('show');
         });
-        $('#form_template').validate({
+        $('#form_role').validate({
             errorElement: 'div',
             errorClass: 'help-block',
             focusInvalid: false,
@@ -288,7 +284,7 @@
                 else error.insertAfter(element);
             }
         });
-        $('#form_template_edit').validate({
+        $('#form_role_edit').validate({
             errorElement: 'div',
             errorClass: 'help-block',
             focusInvalid: false,
@@ -327,16 +323,14 @@
         });
         //添加
         $('#submit_add').click(function () {
-            if (!$('#form_template').valid()) {
+            if (!$('#form_role').valid()) {
                 return false;
             }
             var data = { name: $('#name').val(), 'remark': $('#remark').val() };
-            $('#template_add_modal').ace_ajax('post', '/api/v1/template', data, false, {
+            $('#role_add_modal').ace_ajax('post', '/api/v1/role', data, false, {
                 dataType: 'json',
                 success: function (res) {
                     if (res.status == 200) {
-                        $('#template_add_modal').modal('hide');
-                        $('.modal-backdrop').remove();
                         showTipOk(res.msg)
                         window.location.reload();
                     } else {
@@ -346,17 +340,15 @@
             });
         })
         $('#submit_edit').click(function () {
-            if (!$('#form_template_edit').valid()) {
+            if (!$('#form_role_edit').valid()) {
                 return false;
             }
             var data = { name: $('#edit_name').val(), remark: $('#edit_remark').val() };
-            $('#template_edit_modal').ace_ajax('post', '/api/v1/template/' + $('#edit_id').val(), data, false, {
+            $('#role_edit_modal').ace_ajax('post', '/api/v1/role/' + edit_id, data, false, {
                 dataType: 'json',
                 method: 'PUT',
                 success: function (res) {
                     if (res.status == 200) {
-                        $('#template_edit_modal').modal('hide');
-                        $('.modal-backdrop').remove();
                         showTipOk(res.msg)
                         window.location.reload();
                     } else {

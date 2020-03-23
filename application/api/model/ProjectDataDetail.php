@@ -9,10 +9,8 @@ namespace app\api\model;
 
 use think\Model;
 
-class TemplateField extends Model {
-    protected $table = 'tab_template_field';
-    protected $create_time = false;
-    protected $update_time = false;
+class ProjectDataDetail extends Model {
+    protected $table = 'tab_user_data_detail';
     function __construct($data = [])
     {
         parent::__construct($data);

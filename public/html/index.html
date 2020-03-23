@@ -167,9 +167,9 @@
 
 					<b class="arrow"></b>
 
-					<ul class="submenu nav-show" style="display: block;">
+					<ul class="submenu nav-show menulist" style="display: block;">
 						<li class="active">
-							<a href="#template" data-url="template">
+							<a href="#template" id="menu_template" data-url="template">
 								<i class="menu-icon fa fa-caret-right"></i>
 								模板列表
 							</a>
@@ -178,7 +178,7 @@
 						</li>
 
 						<li class="">
-							<a href="#data" data-url="data">
+							<a href="#data" id="menu_data" data-url="data">
 								<i class="menu-icon fa fa-caret-right"></i>
 								数据管理
 							</a>
@@ -186,7 +186,7 @@
 							<b class="arrow"></b>
 						</li>
 						<li class="">
-							<a href="#data" data-url="data">
+							<a href="#work" id="menu_work" data-url="work">
 								<i class="menu-icon fa fa-caret-right"></i>
 								流程管理
 							</a>
@@ -236,6 +236,8 @@
 
 	<!-- ace scripts -->
 	<script src="./components/bootbox.min.js"></script>
+	<script src="./components/moment.min.js"></script>
+	<script src="./components/bootstrap-datetimepicker.min.js"></script>
 	<script src="./assets/js/src/elements.scroller.js"></script>
 	<!-- <script src="./assets/js/src/elements.colorpicker.js"></script> -->
 	<!-- <script src="./assets/js/src/elements.fileinput.js"></script> -->
@@ -274,7 +276,14 @@
 			default_url: 'template', //default url
 			loading_icon: "fa-cog fa-2x blue"
 		});
-
+		$(function(){
+			var a = window.location.hash.split('/')[0];
+			$('.menulist > li').removeClass('active');
+			var r = a.match(/^#(\w+)\??.*$/i)
+			a= r[1];
+			$('#menu_'+a).parent('.menulist > li').addClass('active');
+			
+		});
 	</script>
 </body>
 

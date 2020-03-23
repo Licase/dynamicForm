@@ -18,14 +18,13 @@ return [
     // 应用调试模式
     'app_debug'              => true,
     // 应用Trace
-    'app_trace'              => true,
+    'app_trace'              => false,
     // 应用模式状态
     'app_status'             => '',
     // 是否支持多模块
  
     // 扩展函数文件
     'extra_file_list'        => [THINK_PATH . 'helper' . EXT],
-
 
     'log'                    => [
         // 日志记录方式，内置 file socket 支持扩展

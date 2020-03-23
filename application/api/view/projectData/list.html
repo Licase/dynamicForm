@@ -1,0 +1,157 @@
+<title>数据管理</title>
+
+<div class="page-header">
+    <h1>
+        项目管理
+        <small>
+            <i class="ace-icon fa fa-angle-double-right"></i>
+            数据管理
+        </small>
+    </h1>
+</div>
+
+<div class="row">
+    <div class="col-xs-12">
+        <!-- PAGE CONTENT BEGINS -->
+
+        <div class="row">
+            <div class="col-xs-12">
+                <button class="btn btn-info" id="data_add">
+                    <i class="ace-icon fa glyphicon glyphicon-plus bigger-120"></i>
+                    新增
+                </button>
+                <div class="col-xs-2">
+                <select class="form-control" onchange="searchProject(this.value)" id="searchProject">
+                    <option value="">请选择项目</option>
+                <?php
+                    if($projectList){
+                        foreach($projectList as $v){
+                            echo '<option '.( $searchId == $v['id'] ? 'selected' : '').' value="'.$v['id'].'">'.$v['name'].'</option>';
+                        }
+                    }
+                ?>
+                </select>
+                </div>
+                <div class="hr hr-dotted"></div>
+
+                <table id="simple-table" class="table table-bordered table-hover" style="table-layout: fixed;">
+                    <thead>
+                        <tr>
+                            <th class="center col-xs-1">
+                                <label class="pos-rel">
+                                    <input type="checkbox" class="ace">
+                                    <span class="lbl"></span>
+                                </label>
+                            </th>
+                            <th class="col-xs-1 center">序号</th>
+                            <th class="col-xs-3">标题</th>
+                            <th class="col-xs-3">模板名</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{volist name="list" id="item" }}
+                        <tr>
+                            <td class="center">
+                                <label class="pos-rel">
+                                    <input type="checkbox" value="{{$item.id}}" class="ace">
+                                    <span class="lbl"></span>
+                                </label>
+                            </td>
+                            <td class="center">
+                                <?php echo $key + ($pagesize * ($page-1))+1 ?>
+                            </td>
+                            <td>
+                                {{$item.title}}
+                            </td>
+                            <td>
+                                {{$item.name}}
+                            </td>
+                            <td>
+                                <button class="btn btn-info btn-xs" title="查看" onclick="viewData({{$item.id}})">查看</button>
+                                <button class="btn btn-info btn-xs" title="编辑" onclick="editData({{$item.id}})">编辑</button>
+                            
+                                <button class="btn btn-info btn-xs" title="审核" onclick="checkData({{$item.id}})">审核</button>
+                                <button class="btn btn-danger btn-xs" title="删除" onclick="delData({{$item.id}},'{{$item.name}}')">删除</button>
+                            </td>
+                        </tr>
+                        {{/volist}} </tbody>
+                </table>
+                <div class="col-xs-2">
+                    <div class="dataTables_info" id="dynamic-table_info" role="status" aria-live="polite">
+                        {{$pagesize}}条/页,共{{$total}}条
+                    </div>
+                </div>
+
+                <div class="col-xs-6 pull-right">
+                    <div class="dataTables_paginate paging_simple_numbers" id="table_paginate">
+                        {{$paginate}}
+
+                    </div>
+                </div>
+            </div> <!-- /.span -->
+        </div>
+    </div>
+</div>
+
+
+<script>
+    function viewData(dataid){
+        var id = parseInt(dataid);
+        window.location.href = '/api/v1/data/view/'+dataid+'?pid='+{{$searchId}};
+    }
+    function searchProject(pid){
+        var id = parseInt(pid);
+        window.location.href = '/api/v1/data?pid='+pid;
+    }
+
+    function editData(id) {
+        var id = parseInt(id);
+        if(id < 1){
+            return ;
+        }
+        window.location.href = '/api/v1/data/edit/'+id;
+    }
+    function delData(id, name) {
+        if (parseInt(id) < 1) {
+            showTipError('参数错误');
+            return false;
+        }
+        bootbox.confirm({
+            message: '确认删除(' + name + ')?',
+            buttons: {
+                confirm: {
+                    label: "确认",
+                    className: "btn-primary btn-sm",
+                },
+                cancel: {
+                    label: "取消",
+                    className: "btn-sm",
+                }
+            },
+            callback: function (res) {
+                if (!res) {
+                    return true;
+                }
+                $('#simple-table').ace_ajax('post', '/api/v1/data', { did: id }, false, {
+                    dataType: 'json',
+                    method: 'DELETE',
+                    success: function (res) {
+                        if (res.status == 200) {
+                            showTipOk(res.msg)
+                            window.location.reload();
+                        } else {
+                            showTipError(res.msg)
+                        }
+                    },
+                })
+            }
+        })
+    }
+    $(function () {
+        $('#data_add').click(function () {
+            var searchId = <?=$searchId ?: 0 ?>;
+            window.location.href="/api/v1/data/add?pid="+searchId;
+        })
+    });
+</script>

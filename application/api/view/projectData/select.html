@@ -1,0 +1,45 @@
+<title>数据管理</title>
+<div class="page-header">
+    <h1> 数据管理 <small>
+            <i class="ace-icon fa fa-angle-double-right"></i> 新增数据 </small>
+    </h1>
+</div>
+<div class="row">
+    <div class="col-xs-12">
+        <!-- PAGE CONTENT BEGINS -->
+        <div class="row">
+            <div class="col-xs-12">
+                <button class="btn" onclick="window.location.href='/api/v1/data'">
+                    <i class="ace-icon fa fa-undo bigger-110"></i> 返回 </button>
+                
+                
+                <div class="hr hr-dotted"></div>
+                
+                <div class="col-xs-2">
+                    <select class="form-control" onchange="searchTemp(this.value)" id="searchTemp">
+                        <option value="">请选择模板</option>
+                    <?php
+                        if($tempList){
+                            foreach($tempList as $v){
+                                echo '<option value="'.$v['id'].'">'.$v['name'].'</option>';
+                            }
+                        }
+                    ?>
+                    </select>
+                    </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+     function searchTemp(tid){
+        var id = parseInt(tid);
+        window.location.href = '/api/v1/data/add?tid='+tid;
+    }
+
+    $(function () {
+    
+      
+    }());
+</script>

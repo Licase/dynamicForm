@@ -4,40 +4,58 @@ namespace app\api\controller;
 
 use app\api\controller\Base as Controller;
 use app\api\model\Template;
-use app\api\model\TemplateField;
+use app\api\model\TemplateDataDetail;
+use app\api\model\TemplateField as FieldModel;
 use think\Exception;
 
-class TempateField extends Controller
+class TemplateField extends Controller
 {
-    /**
-     * 生成模板的HTML
-     */
-    function getHtml($id){
-        if($id < 1){
-            return errorReturn('非法访问');
-        }
-        $model = new TemplateField();
-        $fields = $model->where(['template_id'=>$id])->order('sort asc,id asc')->select();
-    }
 
     /**
      * 保存模板字段
      */
     function save()
     {
-        $template_id = (int)input('id');
+        $tid = (int)input('t_id');
+        if($tid < 1){
+            return errorReturn('非法访问');
+        }
         $name = input('name');
+        $date_type = input('dataType');
+        $options = input('options');
+        $sort = (int)input('sort',20);
+        $is_title = (int)input('isTitle',0);
+        $is_require = (int)input('isRequire',0);
+        $is_filter = (int)input('isFilter',0);
+        $is_sort = (int)input('isSort',0);
         $remark = input('remark');
-        $model = new Template();
-        $data = ['name' => $name, 'remark' => $remark];
+        $model = new FieldModel();
+        $data = [
+            'temp_id'=>$tid,
+            'name' => $name, 
+            'data_type' =>$date_type,
+            'options' =>$options,
+            'sort'=>$sort,
+            'user_id'=>$this->user_id,
+            'is_title' => $is_title,
+            'is_require'=>$is_require,
+            'is_filter'=>$is_filter,
+            'is_sort'=>$is_sort,
+            'remark' => $remark
+        ];
+        if(in_array($date_type,[DT_SELECT,DT_RADIO]) && !$options){
+            return errorReturn('请填写可选值');
+        }
         $rule = [
-            'name' => 'require|max:32|regex:/[-\w\x4e00-\x9fa5]+/iU',
+            'name' => 'require|max:32|regex:/[-\w\x{4e00}-\x{9fa5}]+/iu',
+            'sort' => 'number|>:0',
             'remark' => 'max:255'
         ];
         $msg = [
             'name.require' => '名称不能为空',
             'name.max' => '名称不超过32个字符',
-            'name' => '名称由字母、数字和下划线构成',
+            'name' => '名称由汉字、字母、数字、下划线及横线组成',
+            'sort'=>'排序值只能为正整数',
             'remark.max' => '备注不超过255个字符'
         ];
         $check = $this->validate($data, $rule, $msg);
@@ -53,7 +71,13 @@ class TempateField extends Controller
             $data['create_time'] = date('Y-m-d H:i:s');
             $id = $model->insertGetId($data);
             $data['id'] = $id;
-            return sucReturn('ok', $data);
+            
+            $count = $model->where(['temp_id'=>$tid])->count('id');
+            if($count > 0){
+                $template = new Template();
+                $template->update(['field_count'=>$count],['id'=>$tid]);
+            }
+            return sucReturn('保存成功', $data);
         } catch (Exception $e) {
             return errorReturn('保存失败(' . $e->getMessage());
         }
@@ -64,5 +88,20 @@ class TempateField extends Controller
      */
     function updateTemplateField(){
 
+    }
+    function del(){
+        $id = (int)input('id');
+        $tid = (int)input('t_id');
+        $model = new FieldModel();
+        $model->where(['id' => $id])->delete();
+
+        $count = $model->where(['temp_id'=>$tid])->count('id');
+        if($count > 0){
+            $template = new Template();
+            $template->update(['field_count'=>$count],['id'=>$tid]);
+        }
+        $modelData = new TemplateDataDetail();
+        $modelData->where(['flow_id'=>$tid,'field_id'=>$id])->delete();
+        return sucReturn('删除成功');
     }
 }

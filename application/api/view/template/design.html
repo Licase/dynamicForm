@@ -9,45 +9,139 @@
         <!-- PAGE CONTENT BEGINS -->
         <div class="row">
             <div class="col-xs-12">
-
+                <button class="btn" onclick="window.location.href='/api/v1/template'">
+                    <i class="ace-icon fa fa-undo bigger-110"></i> 返回 </button>
                 <button class="btn btn-info" id="field_add">
                     <i class="ace-icon fa glyphicon glyphicon-plus bigger-120"></i> 新增字段 </button>
+                
                 <div class="hr hr-dotted"></div>
-                <form class="form-horizontal col-xs-9 widget-box " id="form_template" role="form">
+                
+                <form class="form-horizontal col-xs-9 widget-box " id="form_template" role="form" style="min-height: 300px;">
                     <h3 class="lighter block green center"> {{$info.name}} </h3>
+                    <div class="hr hr-dotted"></div>
                     <div class="row">
-                        <label class="col-sm-3 control-label no-padding-right" for="name">名称：</label>
+                        <label class="col-sm-3 control-label no-padding-right" for="tab_title"> <i style="color: red;">*</i>标题：</label>
                         <div class="col-sm-6">
-
-                            <input class="col-xs-9 form-control" type="text" id="name" name="name" placeholder="模板名称" maxlength="32" />
+                            <input class="col-xs-9 form-control" type="text" name="tab_title" id="tab_title" maxlength="64" /> 
                         </div>
                     </div>
-                    <div class="space-4"></div>
-                    <div class="row">
-                        <label class="col-sm-3 control-label no-padding-right" for="remark">备注：</label>
-                        <div class="col-sm-6">
-                            <textarea class="form-control" id="remark" name="remark" rows="4" style="overflow: hidden; word-wrap: break-word; resize: vertical;"
-                                maxlength="250"></textarea>
-                        </div>
-                    </div>
-                    <div class="space-4"></div>
-                    <div class="clearfix form-actions">
-                        <div class="col-md-offset-3 col-md-9">
 
-                            <button class="btn btn-info" type="button">
-                                <i class="ace-icon fa fa-check bigger-110"></i> 提交 </button> &nbsp; &nbsp; &nbsp;
-
-                            <button class="btn" type="reset">
-                                <i class="ace-icon fa fa-undo bigger-110"></i> 返回 </button>
+                    {{volist name="fieldList" id="field"}}
+                        <div class="row">
+                            <label class="col-sm-3 control-label no-padding-right" for="field[{{$field.id}}]"> <i title="删除({{$field.name}})" onclick="delField({{$field.id}},'{{$field.name}}')" class="ace-icon fa fa-trash-o bigger-120 red" style="cursor: pointer;"></i> &nbsp;<?php if ($field['is_require']){ ?><i style="color: red;">*</i><?php }?> {{$field.name}}：</label>
+                            
+                                {{switch name="field.data_type"}}
+                                {{case value="text" break="1"}}
+                                <div class="col-sm-6">
+                                    <input class="col-xs-9 form-control" type="text" name="field[{{$field.id}}]" id="field_{{$field.id}}" maxlength="32" /> 
+                                {{/case}}
+                                {{case value="number" break="1"}}
+                                <div class="col-sm-2">
+                                    <input class="col-xs-9 form-control" type="number" name="field[{{$field.id}}]" id="field_{{$field.id}}" maxlength="32" /> 
+                                {{/case}}
+                                {{case value="date" break="1"}}
+                                <div class="col-sm-3">
+                                    <div class="input-group">
+                                    <input id="date-timepicker_{{$field.id}}" name="field[{{$field.id}}]" type="text" class="form-control">
+                                    <span class="input-group-addon">
+                                        <i class="fa fa-clock-o bigger-110"></i>
+                                    </span>
+                                    <script>
+                                        $(function(){
+                                            $('#date-timepicker_{{$field.id}}').datetimepicker({
+                                        format: 'YYYY-MM-DD H:mm:ss',//use this option to display seconds
+                                        icons: {
+                                            time: 'fa fa-clock-o',
+                                            date: 'fa fa-calendar',
+                                            up: 'fa fa-chevron-up',
+                                            down: 'fa fa-chevron-down',
+                                            previous: 'fa fa-chevron-left',
+                                            next: 'fa fa-chevron-right',
+                                            today: 'fa fa-arrows ',
+                                            clear: 'fa fa-trash',
+                                            close: 'fa fa-times'
+                                        }
+                                        }).next().on(ace.click_event, function(){
+                                            $(this).prev().focus();
+                                        });
+                                        });
+                                    </script>
+                                    </div>
+                                {{/case}}
+                                {{case value="radio" break="1"}}
+                                <div class="col-sm-6">
+                                <div class="radio">
+                                <?php
+                                    if($field['options']){
+                                        $vals = explode('|',$field['options']);
+                                        $f= true;
+                                        foreach($vals as $v){
+                                            if(!trim($v)){
+                                                continue;
+                                            }
+                                            echo '<label>
+                                                    <input name="field['.$field['id'].']" '.($f ? 'checked' : '').' type="radio" value="'.$v.'" class="ace">
+                                                    <span class="lbl">'.$v.'</span>
+                                                </label>';
+                                            $f = false;
+                                        }
+                                    }
+                                ?>
+                                </div>
+                                {{/case}}
+                                {{case value="checkbox" break="1"}}
+                                <div class="col-sm-6">
+                                <div class="checkbox">
+                                    <?php
+                                        if($field['options']){
+                                            $vals = explode('|',$field['options']);
+                                            foreach($vals as $v){
+                                                if(!trim($v)){
+                                                    continue;
+                                                }
+                                                echo '<label>
+                                                        <input name="field['.$field['id'].'][]" type="checkbox" value="'.$v.'" class="ace">
+                                                        <span class="lbl">'.$v.'</span>
+                                                    </label>';
+                                            }
+                                        }
+                                    ?>
+                                    </div>
+                                {{/case}}
+                                {{case value="select" break="1"}}
+                                <div class="col-sm-4">
+                                <select class="form-control" id="field[{{$field.id}}]">
+                                    <option value="">请选择</option>
+                                <?php
+                                    if($field['options']){
+                                        $vals = explode('|',$field['options']);
+                                        foreach($vals as $v){
+                                            if(!trim($v)){
+                                                continue;
+                                            }
+                                            echo '<option value="'.$v.'">'.$v.'</option>';
+                                        }
+                                    }
+                                ?>
+                                </select>
+                                {{/case}}
+                                {{case value="file" break="1"}}
+                                <div class="col-sm-4">
+                                    <input class="col-xs-9 form-control" type="file" name="field[{{$field.id}}]" id="field_{{$field.id}}" /> 
+                                {{/case}}
+                                {{/switch}}
+                                
+                            </div>
                         </div>
-                    </div>
+                        <div class="space-4"></div>
+                    {{/volist}}
                 </form>
             </div>
         </div>
     </div>
 </div>
 <!-- 增加字段弹出框-->
-<div id="template_add_modal" class="modal fade">
+<div id="field_add_modal" class="modal fade">
     <div class="modal-dialog" style="position: relative;top:40%;transform: translateY(-50%);min-width: 1024px;">
         <div class="modal-content">
             <div class="modal-header no-padding">
@@ -70,53 +164,61 @@
                     <div class="form-group">
                         <label class="col-sm-3 control-label no-padding-right" for="name">数据类型：</label>
                         <div class="col-sm-9">
-                            <select id="dataType" name="dataType"> {{volist name="dataType" id="item" }} <option value="{{$key}}"> {{$item}} </option> {{/volist}} </select>
+                            <select id="dataType" onchange="checkDataType()" name="dataType"> {{volist name="dataType" id="item" }} <option value="{{$key}}"> {{$item}} </option> {{/volist}} </select>
                         </div>
                     </div>
-                    <div class="form-group">
+                    <div class="form-group" id="option_box" style="display: none;">
                         <label class="col-sm-3 control-label no-padding-right" for="name">可用值：</label>
                         <div class="col-sm-9">
-
-                            <input type="text" id="name" name="name" placeholder="是|否|其它" maxlength="32" class="col-xs-10">
+                            <input type="text" id="options" name="options" placeholder="是|否|其它,仅当数据类型为单选、复选、下拉框时填写" maxlength="32" class="col-xs-10">
                         </div>
                     </div>
                     <div class="form-group">
-                        <label class="col-sm-3 control-label no-padding-right" for="name">排序：</label>
+                        <label class="col-sm-3 control-label no-padding-right" for="name">字段排序(升序)：</label>
                         <div class="col-sm-9">
-                            <input type="text" id="sort" name="sort" placeholder="排序" value="10" class="col-xs-1">
+                            <input type="text" id="sort" name="sort" placeholder="排序" value="20" class="col-xs-1">
                         </div>
                     </div>
                     <div class="form-group">
                         <label class="col-sm-3 control-label no-padding-right" for="isTitle">设为展示列：</label>
-                        <div class="col-sm-9">
+                        <div class="col-sm-9 checkbox">
                             <label>
-                                <input name="isTitle" class="ace ace-switch ace-switch-6" type="checkbox">
+                                <input name="isTitle" id="isTitle" class="ace ace-switch ace-switch-6" type="checkbox">
                                 <span class="lbl"></span>
                             </label>
                         </div>
                     </div>
                     <div class="form-group">
-                        <label class="col-sm-3 control-label no-padding-right" for="isReuqire">是否必填：</label>
-                        <div class="col-sm-9">
+                        <label class="col-sm-3 control-label no-padding-right" for="isRequire">是否必填：</label>
+                        <div class="col-sm-9 checkbox">
                             <label>
-                                <input name="isReuqire" class="ace ace-switch ace-switch-6" type="checkbox">
+                                <input name="isRequire" id="isRequire" class="ace ace-switch ace-switch-6" type="checkbox">
+                                <span class="lbl"></span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-3 control-label no-padding-right" for="isSort">作为排序项(按值升序)：</label>
+                        <div class="col-sm-9 checkbox">
+                            <label>
+                                <input name="isSort" id="isSort" class="ace ace-switch ace-switch-6" type="checkbox">
                                 <span class="lbl"></span>
                             </label>
                         </div>
                     </div>
                     <div class="form-group">
                         <label class="col-sm-3 control-label no-padding-right" for="isFilter">作为搜索项：</label>
-                        <div class="col-sm-9">
+                        <div class="col-sm-9 checkbox">
                             <label>
-                                <input name="isFilter" class="ace ace-switch ace-switch-6" type="checkbox">
+                                <input name="isFilter" id="isFilter" class="ace ace-switch ace-switch-6" type="checkbox">
                                 <span class="lbl"></span>
                             </label>
                         </div>
                     </div>
                     <div class="form-group">
                         <label class="col-sm-3 control-label no-padding-right" for="remark">备注：</label>
-                        <div class="col-sm-9">
-                            <textarea id="remark" name="remark" class="col-xs-10" rows="7" style="overflow: hidden; word-wrap: break-word; resize: vertical;"
+                        <div class="col-sm-6">
+                            <textarea id="remark" name="remark" class="col-xs-10" rows="4" style="overflow: hidden; word-wrap: break-word; resize: vertical;"
                                 maxlength="250"></textarea>
                         </div>
                     </div>
@@ -134,37 +236,19 @@
     </div>
 </div>
 <script>
-
-    function editTemplate(id) {
-        $.ajax({
-            url: '/api/v1/template/' + id,
-            dataType: 'json',
-            async: false,
-            success: function (res) {
-                if (res.status == 200) {
-                    $('#edit_name').val(res.data.name);
-                    $('#edit_remark').val(res.data.remark);
-                    $('#edit_id').val(id);
-                    $('#template_edit_modal').modal('show');
-                } else {
-                    showTipError(res.msg)
-                }
-            },
-        });
-    }
-    function delTemplate(id, name) {
+    function delField(id, name) {
         if (parseInt(id) < 1) {
             showTipError('参数错误');
             return false;
         }
-        if (confirm('确认删除(' + name + ')')) {
-            $('#template_add_modal').ace_ajax('post', '/api/v1/template', { id: id }, false, {
+        if (confirm('确认删除(' + name + ')?已有数据的该字段将被清空')) {
+            $('#form_template').ace_ajax('post', '/api/v1/templateField', { id: id,t_id:{{$tid}} }, false, {
                 dataType: 'json',
                 method: 'DELETE',
                 success: function (res) {
                     if (res.status == 200) {
                         showTipOk(res.msg)
-                        $('.page-ajax-content').ace_ajax('reload');
+                        window.location.reload();
                     } else {
                         showTipError(res.msg)
                     }
@@ -172,19 +256,19 @@
             });
         }
     }
+    function checkDataType(){
+        var type = $('#dataType').val();
+        if(type == '{{$Think.DT_RADIO}}' || type == '{{$Think.DT_SELECT}}' || type == '{{$Think.DT_CHECKBOX}}' ){
+            $('#option_box').show();
+        }else{
+            $('#option_box').hide();
+        }
+    }
     $(function () {
-
-
+        
         $('#field_add').click(function () {
+            $('#field_add_modal').modal('show');
             $('#form_field_add')[0].reset();
-            $('#template_add_modal').modal('show');
-        })
-        $('.pagination  li  a').click(function (e) {
-            e.preventDefault();
-            var hash = this.hash;
-            var link = new URL(this.href)
-            window.location.href = hash + link.search;
-            // return false;
         })
         $('#form_field_add').validate({
             errorElement: 'div',
@@ -223,82 +307,44 @@
                 else error.insertAfter(element);
             }
         });
-        $('#form_field_edit').validate({
-            errorElement: 'div',
-            errorClass: 'help-block',
-            focusInvalid: false,
-            ignore: "",
-            rules: {
-                name: {
-                    required: true,
-                },
-            },
-            messages: {
-                name: {
-                    required: "名称不能为空"
-                }
-            },
-            highlight: function (e) {
-                $(e).closest('.form-group').addClass('has-error');
-            },
-            success: function (e) {
-                $(e).closest('.form-group').removeClass('has-error');//.addClass('has-info');
-                $(e).remove();
-            },
-            errorPlacement: function (error, element) {
-                if (element.is('input[type=checkbox]') || element.is('input[type=radio]')) {
-                    var controls = element.closest('div[class*="col-"]');
-                    if (controls.find(':checkbox,:radio').length > 1) controls.append(error);
-                    else error.insertAfter(element.nextAll('.lbl:eq(0)').eq(0));
-                }
-                else if (element.is('.select2')) {
-                    error.insertAfter(element.siblings('[class*="select2-container"]:eq(0)'));
-                }
-                else if (element.is('.chosen-select')) {
-                    error.insertAfter(element.siblings('[class*="chosen-container"]:eq(0)'));
-                }
-                else error.insertAfter(element);
-            }
-        });
+       
         //添加
         $('#submit_add').click(function () {
-            if (!$('#form_template').valid()) {
+            if (!$('#form_field_add').valid()) {
                 return false;
             }
-            var data = { name: $('#name').val(), 'remark': $('#remark').val() };
-            $('#template_add_modal').ace_ajax('post', '/api/v1/template', data, false, {
+            var type = $('#dataType').val();
+            var option = $('#options').val();
+            if( (type == 'radio' || type == 'select') && !option ){
+                showTipError('请输入可选项');
+                return;
+            }
+            var data = {
+                t_id: '{{$tid}}',
+                name: $('#name').val(),
+                dataType: type,
+                options: $('#options').val(),
+                sort: parseInt($('#sort').val()),
+                isTitle: $('#isTitle').is(':checked') == true ? 1 : 0,
+                isSort: $('#isSort').is(':checked') == true ? 1 : 0,
+                isRequire: $('#isRequire').is(':checked') ? 1 : 0,
+                isFilter: $('#isFilter').is(':checked') ? 1 : 0 ,
+                remark: $('#remark').val()
+             };
+            $('#field_add_modal').ace_ajax('post', '/api/v1/templateField', data, false, {
                 dataType: 'json',
                 success: function (res) {
                     if (res.status == 200) {
-                        $('#template_add_modal').modal('hide');
+                        $('#field_add_modal').modal('hide');
                         $('.modal-backdrop').remove();
                         showTipOk(res.msg)
-                        $('.page-ajax-content').ace_ajax('reload');
+                        window.location.reload();
                     } else {
                         showTipError(res.msg)
                     }
                 },
             });
         })
-        $('#submit_edit').click(function () {
-            if (!$('#form_template_edit').valid()) {
-                return false;
-            }
-            var data = { name: $('#edit_name').val(), remark: $('#edit_remark').val() };
-            $('#template_edit_modal').ace_ajax('post', '/api/v1/template/' + $('#edit_id').val(), data, false, {
-                dataType: 'json',
-                method: 'PUT',
-                success: function (res) {
-                    if (res.status == 200) {
-                        $('#template_edit_modal').modal('hide');
-                        $('.modal-backdrop').remove();
-                        showTipOk(res.msg)
-                        $('.page-ajax-content').ace_ajax('reload');
-                    } else {
-                        showTipError(res.msg)
-                    }
-                },
-            });
-        })
-    });
+      
+    }());
 </script>

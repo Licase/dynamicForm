@@ -3,16 +3,14 @@
 namespace app\api\controller;
 
 use app\api\controller\Base as Controller;
-use app\api\model\Template as TemplateModel;
-use app\api\model\TemplateData;
-use app\api\model\TemplateField;
+use app\api\model\Role as ModelRole;
 use think\Config;
 use think\Exception;
 
-class Template extends Controller
+class Role extends Controller
 {
     /**
-     * 获取模板列表
+     * 获取角色列表
      */
     function index()
     {
@@ -23,8 +21,8 @@ class Template extends Controller
 
         $name = input('name');
 
-        $model = new TemplateModel();
-        $where = [];
+        $model = new ModelRole();
+        $where = ['status'=> 1];
         if ($name) {
             $where['name'] = ['like', "%{$name}%"];
         }
@@ -35,7 +33,7 @@ class Template extends Controller
             if ($page > 1 && $total <= ($page - 1) * $pagesize) {
                 $page = ceil($total / $pagesize);
             }
-            $list = $model->where($where)->order('id desc')->paginate(['list_rows' => $pagesize, 'page' => $page, 'path' => '/api/v1/template', 'fragment' => '']);
+            $list = $model->where($where)->order('id desc')->paginate(['list_rows' => $pagesize, 'page' => $page, 'path' => '/api/v1/project']);
 
             $paginate = $list->render();
             $data['paginate'] = $paginate;
@@ -49,48 +47,24 @@ class Template extends Controller
 
         return $this->view->fetch('list', $data);
     }
-    /**
-     * 获取模板
+        /**
+     * 获取角色属性
      */
     function read($id)
     {
-        $model = new TemplateModel();
+        $model = new ModelRole();
         $list = $model->where(['id' => $id])->find();
         return sucReturn('ok', $list);
     }
 
     /**
-     * 获取模板详情,用于编辑与预览
-     */
-    function getDetail($id)
-    {
-        if (!$id) {
-            exit('非法访问');
-        }
-        $modelTemplate = new TemplateModel();
-        $info = $modelTemplate->where(['id' => $id])->field('id,name,remark')->find();
-        if (!$info) {
-            exit('模板不存在');
-        }
-
-        $model = new TemplateField();
-        $list = $model->where(['temp_id' => $id])->order('sort asc,id asc')->select();
-
-        $data['dataType'] = Config::get('dataType');
-        $data['info'] = $info;
-        $data['tid'] = $id;
-        $data['fieldList'] = $list;
-        return $this->view->fetch('design', $data);
-    }
-
-    /**
-     * 保存模板
+     * 添加角色
      */
     function save()
     {
         $name = input('name');
         $remark = input('remark');
-        $model = new TemplateModel();
+        $model = new ModelRole();
         $data = ['name' => $name, 'remark' => $remark];
         $rule = [
             'name' => 'require|max:32|regex:/[-\w\x{4e00}-\x{9fa5}]+/iu',
@@ -122,7 +96,7 @@ class Template extends Controller
     }
 
     /**
-     * 编辑模板属性
+     * 编辑角色
      */
     function update($id)
     {
@@ -131,7 +105,7 @@ class Template extends Controller
         }
         $name = input('name');
         $remark = input('remark');
-        $model = new TemplateModel();
+        $model = new ModelRole();
         $data = ['name' => $name, 'remark' => $remark];
         $rule = [
             'name' => 'require|max:32|regex:/[-\w\x{4e00}-\x{9fa5}]+/iu',
@@ -160,17 +134,12 @@ class Template extends Controller
             return errorReturn('保存失败(' . $e->getMessage());
         }
     }
-
+    //隐藏或显示角色
     function del()
     {
         $id = input('id');
-        $modelData = new TemplateData();
-        $t = $modelData->where(['temp_id'=>$id])->count('id');
-        if($t > 0){
-            return errorReturn('模板已被使用，无法删除');
-        }
-        $model = new TemplateModel();
-        $model->where(['id' => $id])->delete();
+        $model = new ModelRole();
+        $model->where(['id' => $id])->update(['status'=>0]);
         return sucReturn('删除成功');
     }
 }

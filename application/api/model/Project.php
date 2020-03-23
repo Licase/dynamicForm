@@ -9,9 +9,8 @@ namespace app\api\model;
 
 use think\Model;
 
-class TemplateField extends Model {
-    protected $table = 'tab_template_field';
-    protected $create_time = false;
+class Project extends Model {
+    protected $table = 'tab_project';
     protected $update_time = false;
     function __construct($data = [])
     {

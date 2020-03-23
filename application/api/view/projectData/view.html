@@ -1,0 +1,55 @@
+<title>数据管理</title>
+<div class="page-header">
+    <h1> 数据管理 <small>
+            <i class="ace-icon fa fa-angle-double-right"></i> 数据详情 </small>
+    </h1>
+</div>
+
+<!-- PAGE CONTENT BEGINS -->
+<div class="col-xs-12">
+
+    <button class="btn" onclick="window.location.href='/api/v1/data?tid={{$searchId}}'">
+        <i class="ace-icon fa fa-undo bigger-110"></i> 返回 </button>
+    <div class="hr hr-dotted"></div>
+    <h3 class="lighter block green center"> {{$info.name}} </h3>
+    <div class="hr hr-dotted"></div>
+    <div class="col-xs-8 bigger-140">
+    <div class="form-group">
+        <div class="col-xs-6 align-right">
+            标题:
+        </div>
+        <div class="col-xs-6">
+            {{$info.title}}
+        </div>
+    </div> 
+    <div class="space-4 col-xs-12"></div> 
+    {{volist name="fields" id="field"}} 
+        <div class="form-group">
+            <div class="col-xs-6 align-right">
+                {{$field.name}}:
+            </div>
+            <div class="col-xs-6">
+                {{if condition="$field.val"}}
+                    {{eq name="field.dataType" value="$Think.DT_CHECKBOX" }}
+                        {{:str_replace('|-|',',',$field.val)}}
+                    {{else}}
+                        {{$field.val}}
+                    {{/eq}}
+                    {{eq name="field.dataType" value="$Think.DT_FILE" }}
+                        <button title="下载文件" onclick="downFile({{$field.detail_id}})"><i class="ace-icon fa fa-download blue"></i></button>
+                    {{/eq}}
+                {{else}}-{{/if}}
+            </div>
+        </div>
+        <div class="space-4 col-xs-12"></div> 
+    {{/volist}}
+</div></div>
+
+<script>
+    function downFile(id){
+        window.open('/api/v1/down/'+id);
+    }
+    $(function () {
+
+    }());
+</script>

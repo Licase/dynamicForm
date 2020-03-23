@@ -1,0 +1,221 @@
+<title>项目流程设计</title>
+<div class="page-header">
+    <h1> 项目管理 <small>
+            <i class="ace-icon fa fa-angle-double-right"></i> 项目流程设计 </small>
+    </h1>
+</div>
+<div class="row">
+    <div class="col-xs-12">
+        <!-- PAGE CONTENT BEGINS -->
+        <div class="row">
+            <div class="col-xs-12">
+                <button class="btn" onclick="window.location.href='/api/v1/project'">
+                    <i class="ace-icon fa fa-undo bigger-110"></i> 返回 </button>
+                <button class="btn btn-info" id="flow_add">
+                    <i class="ace-icon fa glyphicon glyphicon-plus bigger-120"></i> 增加步骤 </button>
+                
+                <div class="hr hr-dotted"></div>
+                
+                <form class="form-horizontal col-xs-9 widget-box " role="form" style="min-height: 300px;">
+                    <h3 class="lighter block green center"> {{$info.name}} </h3>
+                    <div class="hr hr-dotted"></div>
+                    <div class="row">
+                        <label class="col-sm-3 control-label no-padding-right" for="tab_title"> <i style="color: red;">*</i>标题：</label>
+                        <div class="col-sm-6">
+                            <input class="col-xs-9 form-control" type="text" name="tab_title" id="tab_title" maxlength="64" /> 
+                        </div>
+                    </div>
+
+                    
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- 增加字段弹出框-->
+<div id="flow_add_modal" class="modal fade">
+    <div class="modal-dialog" style="position: relative;top:40%;transform: translateY(-50%);min-width: 1024px;">
+        <div class="modal-content">
+            <div class="modal-header no-padding">
+                <div class="table-header">
+
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
+
+                        <span class="white">×</span>
+                    </button> 新增步骤 </div>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal" id="form_flow_add" role="form">
+                    
+                    <div class="form-group">
+                        <label class="col-sm-3 control-label no-padding-right" for="isRequire"><i style="color: red;">*</i>使用的模板：</label>
+                        <div class="col-sm-8 checkbox">
+                        {{volist name="tempList" id="temp"}}
+                        <div class="col-sm-4">
+                        <label>
+                            <input name="temps[]" type="checkbox" id="temps_{{$temp.id}}"  value="{{$temp.id}}" class="ace">
+                            <span class="lbl">{{$temp.name}}</span>
+                        </label>
+                        </div>
+                        {{/volist}}
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="col-sm-3 control-label no-padding-right" for="isRequire">参与的角色：</label>
+                        <div class="col-sm-8 checkbox">
+                            <span class="red">不选择则所有人员可用</span><br/>
+                        {{if condition="$roles"}}
+                            {{volist name="roles" id="role"}}
+                            <div class="col-sm-4">
+                            <label>
+                                <input name="roles[]" type="checkbox" id="role_{{$role.id}}"  value="{{$role.id}}" class="ace">
+                                <span class="lbl">{{$role.name}}</span>
+                            </label>
+                            </div>
+                            {{/volist}}
+                        {{else}}
+                            <div>不限制</div>
+                        {{/if}}
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="col-sm-3 control-label no-padding-right" for="isRequire" title="有审核,经过管理人员审核后才可进入下一步,否则后续流程无效">是否审核：</label>
+                        <div class="col-sm-9 checkbox">
+                            <label>
+                                <input name="ischeck" id="ischeck" class="ace ace-switch ace-switch-6" type="checkbox">
+                                <span class="lbl"></span>
+                            </label>
+                        </div>
+                    </div>
+                   
+                </form>
+            </div>
+            <div class="modal-footer no-margin-top center">
+
+                <button class="btn btn-sm btn-info" type="button" id="submit_add">
+                    <i class="ace-icon fa fa-check bigger-110"></i> 提交 </button>
+
+                <button class="btn btn-sm btn-danger " data-dismiss="modal">
+                    <i class="ace-icon fa fa-times"></i> 取消 </button>
+            </div>
+        </div><!-- /.modal-content -->
+    </div>
+</div>
+<script>
+    var totalStep = {{$info.steps}};
+    function delStep(id, name) {
+        if (parseInt(id) < 1) {
+            showTipError('参数错误');
+            return false;
+        }
+        
+        $('#form_pro_flow').ace_ajax('post', '/api/v1/project/flow', { id: id,p_id:{{$pid}} }, false, {
+            dataType: 'json',
+            method: 'DELETE',
+            success: function (res) {
+                if (res.status == 200) {
+                    showTipOk(res.msg)
+                    window.location.reload();
+                } else {
+                    showTipError(res.msg)
+                }
+            },
+        });
+        
+    }
+
+    $(function () {
+        
+        $('#flow_add').click(function () {
+            var has_check = {{$has_check}};
+            if(!has_check){
+                showTipError('上一步无需审核,无法新增步骤');
+                return false;
+            }
+            $('#flow_add_modal').modal('show');
+            $('#form_flow_add')[0].reset();
+        })
+        $('#form_flow_add').validate({
+            errorElement: 'div',
+            errorClass: 'help-block',
+            focusInvalid: false,
+            ignore: "",
+            rules: {
+                'temps[]': {
+                    required: true,
+                },
+            },
+            messages: {
+                'temps[]': {
+                    required: "请选择模板"
+                }
+            },
+            highlight: function (e) {
+                $(e).closest('.form-group').addClass('has-error');
+            },
+            success: function (e) {
+                $(e).closest('.form-group').removeClass('has-error');//.addClass('has-info');
+                $(e).remove();
+            },
+            errorPlacement: function (error, element) {
+                if (element.is('input[type=checkbox]') || element.is('input[type=radio]')) {
+                    var controls = element.closest('div[class*="col-"]');
+                    if (controls.find(':checkbox,:radio').length > 1) controls.append(error);
+                    else error.insertAfter(element.nextAll('.lbl:eq(0)').eq(0));
+                }
+                else if (element.is('.select2')) {
+                    error.insertAfter(element.siblings('[class*="select2-container"]:eq(0)'));
+                }
+                else if (element.is('.chosen-select')) {
+                    error.insertAfter(element.siblings('[class*="chosen-container"]:eq(0)'));
+                }
+                else error.insertAfter(element);
+            }
+        });
+       
+        //添加
+        $('#submit_add').click(function () {
+            if (!$('#form_flow_add').valid()) {
+                return false;
+            }
+            var unused = {{$tempList ? 1 : 0}};
+            if(!unused){
+                showTipError('无可用模板');
+                return 
+            }
+        
+            var temps = [];
+            var roles = [];
+            $('input[name="roles[]"]:checked').each(function(){
+                roles.push($(this).val())
+            })
+            $('input[name="temps[]"]:checked').each(function(){
+                temps.push($(this).val())
+            })
+
+            var data = {
+                p_id: '{{$pid}}',
+                step: {{$info.steps+1}},
+                temps:temps.join(','),
+                roles:roles.join(','),
+                ischeck: $('#ischeck').is(':checked') ? 1 : 0
+             };
+            $('#flow_add_modal').ace_ajax('post', '/api/v1/project/flow', data, false, {
+                dataType: 'json',
+                success: function (res) {
+                    if (res.status == 200) {
+                        $('#flow_add_modal').modal('hide');
+                        $('.modal-backdrop').remove();
+                        showTipOk(res.msg)
+                        window.location.reload();
+                    } else {
+                        showTipError(res.msg)
+                    }
+                },
+            });
+        })
+      
+    }());
+</script>

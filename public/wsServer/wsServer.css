@@ -1,0 +1,232 @@
+*{
+    /* font-size:0.15rem; */
+    border:0;
+    margin:0;
+    padding: 0;
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+}
+html,body{
+    height: 100%;
+    overflow: hidden;
+    font-size: 100px;
+}
+@media screen and (max-width: 1100px){
+    /* 手机端CSS代码 */
+    html,body{
+        height: 100%;
+        overflow: hidden;
+        font-size: 200px;
+    }
+}
+
+.page-header{
+    width: 80%;
+    max-width: 3rem;
+    margin:10px auto;
+    font-size: 0.16rem;
+    text-align:center;
+}
+.page-content{
+    /* float: left; */
+    width:90%;
+    max-width: 1280px;
+    /* border: 1px solid #666; */
+    height: 90%;
+    min-height: 400px;
+    /* position: relative; */
+    margin:10px auto;
+}
+.page-content .right{
+    float:left;
+    width: 80%;
+    height: 100%;
+}
+.clientList{
+    /* position: absolute; */
+    float:left;
+    width:20%;
+    max-width: 400px;
+    height: 100%;
+    border: 1px solid #666;
+    overflow-y:scroll;
+    font-size: 0.2rem;
+}
+.clientList .clientList-title{
+    font-size: 0.2rem;
+    font-weight: bolder;
+    text-align: center;
+    margin:5px 0;
+}
+.clientList .clientList-user{
+    text-align: center;
+    margin:5px 0 5px 5px;
+}
+.clientList .user{
+    width:100%;
+    padding: 10px;
+}
+.clientList .user .name{
+    display: inline-block;
+    font-size: 0.16rem;
+    cursor: pointer;
+    width:90%;
+}
+.clientList .talking{
+    background-color: #eeeeee;
+ }
+.clientList .user .num{
+    display: inline-block;
+    font-size: 0.16rem;
+    color: #fff;
+    display: none;
+    width: 10%;
+ }
+ .clientList .user .num .badge{
+    color: #fff;
+    /* display: none; */
+    /* width: 30%; */
+ }
+.msgbox{
+    width: 100%;
+    border: 1px solid #666;
+    height: 70%;
+    /* height:-webkit-calc(100vh - 300px); 
+    height:-moz-calc(100vh - 300px); */
+    overflow-y:scroll;
+    margin: 0 auto;
+}
+.msgbox-client{
+    width:100%;
+   
+}
+.msgbox .talking{
+ display: block;   
+}
+.msgbox .notalking{
+    display: none;
+}
+
+.msgbox .msg{
+    width: 100%;
+    min-height:10px;
+    margin: 2px 0;
+    word-wrap: break-word;
+    
+}
+
+.msgbox .msg-right{
+    width:80%;
+    float: right;
+    text-align: right;
+    margin-right: 10px;;
+}
+.msgbox .msg-right p.my,.msgbox .msg-left p.my{
+    color:blue;
+    float: right;
+    padding: 2px 0;
+    width: 100%;
+    font-size: 0.12rem;
+}
+.msgbox .msg-left{
+    width:90%;
+    float:left;
+    text-align: left;
+    margin-left: 10px;;
+}
+
+.msgbox .msg-right p.text{
+    float:right;
+    text-align:left;
+    padding: 0.01rem 0.1rem;
+    width: auto;
+    max-width: 90%;
+    word-wrap:break-word;
+    font-size: 0.12rem;
+    background-color: #eee;
+    border-radius: 4px;
+    margin-right: 0.12rem;
+}
+.msgbox .msg-left p.text{
+    float:left;
+    text-align:left;
+    padding: 0.01rem 0.1rem;
+    width: auto;
+    max-width: 90%;
+    word-wrap:break-word;
+    font-size: 0.12rem;
+    background-color: #eee;
+    border-radius: 4px;
+    margin-left: 0.12rem;
+}
+.msgbox .msg-center{
+    float: left;
+    margin:3px auto;
+    font-size: 0.12rem;
+    line-height: 20px;
+    color:green;
+    text-align: center;
+}
+
+.sendbox,.sendbox-client{
+    float:left;
+    width: 100%;
+    margin:0 auto;
+    border: 1px solid #666;
+    height:30%;
+}
+.sendbox-client{
+    position: relative;
+    float: none;
+}
+.sendbox textarea,.sendbox-client textarea{
+    cursor: pointer;
+    display: block;
+    font-size: 0.14rem;
+    padding: 5px 0 0 9px;
+    width: 100%;
+    height: 80%;
+    overflow-wrap: break-word;
+    overflow-y:scroll;
+    resize:none;
+}
+.send{
+    float: right;
+    width: 0.8rem;
+    height:20%;
+    border: 1px solid #666;
+    font-size: 0.12rem;
+    border-bottom-width: 2px;
+    border-radius: 4px !important;
+    border-color: #666;;
+    background-color: #629B58 !important;
+    color:#fff;
+    cursor: pointer;
+        position: relative;
+        top:-10px;
+        right: 15px;
+}
+.badge{
+    text-shadow: none;
+    padding-top: 1px;
+    padding-bottom: 3px;
+    font-weight: normal;
+    line-height: 12px;
+    background-color: #D15B47;
+    display: inline-block;
+    min-width: 16px;
+    color: #fff;
+    vertical-align: middle;
+    white-space: nowrap;
+    text-align: center;
+    border-radius: 10px;
+    margin-left: 5px;
+    margin-bottom: 1px;
+    font-size: 0.12rem;
+}
+.remain{
+    font-size: 0.13rem;
+    color:green;
+    float: left;
+}

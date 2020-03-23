@@ -9,8 +9,8 @@ namespace app\api\model;
 
 use think\Model;
 
-class TemplateField extends Model {
-    protected $table = 'tab_template_field';
+class AdminRole extends Model {
+    protected $table = 'tab_admin_role';
     protected $create_time = false;
     protected $update_time = false;
     function __construct($data = [])

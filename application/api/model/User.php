@@ -7,11 +7,10 @@
 
 namespace app\api\model;
 
-use \Think\Model;
+use think\Model;
 
-class TemplateData extends Model {
-    protected $table = 'tab_user_data';
-    protected $create_time = false;
+class User extends Model {
+    protected $table = 'tab_user';
     protected $update_time = false;
     function __construct($data = [])
     {
