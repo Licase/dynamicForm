@@ -7,31 +7,239 @@
 <div class="row">
     <div class="col-xs-12">
         <!-- PAGE CONTENT BEGINS -->
-        <div class="row">
-            <div class="col-xs-12">
-                <button class="btn" onclick="window.location.href='/api/v1/project'">
+        <div class="col-xs-9">
+            
+                <button class="btn" onclick="window.location.href='{{$baseUrl}}/api/v1/project'">
                     <i class="ace-icon fa fa-undo bigger-110"></i> 返回 </button>
                 <button class="btn btn-info" id="flow_add">
                     <i class="ace-icon fa glyphicon glyphicon-plus bigger-120"></i> 增加步骤 </button>
                 
-                <div class="hr hr-dotted"></div>
-                
-                <form class="form-horizontal col-xs-9 widget-box " role="form" style="min-height: 300px;">
-                    <h3 class="lighter block green center"> {{$info.name}} </h3>
-                    <div class="hr hr-dotted"></div>
-                    <div class="row">
-                        <label class="col-sm-3 control-label no-padding-right" for="tab_title"> <i style="color: red;">*</i>标题：</label>
-                        <div class="col-sm-6">
-                            <input class="col-xs-9 form-control" type="text" name="tab_title" id="tab_title" maxlength="64" /> 
-                        </div>
-                    </div>
-
-                    
-                </form>
+        </div>
+        
+        <div class="col-xs-9 center">
+            <h3 class="block header"> {{$proInfo.name}} </h3>
+            <div class="col-sm-9">
+                <label class="col-sm-2 control-label no-padding-right">管理角色：</label>
+                <div class="col-sm-7 align-left">
+                    {{volist name="adminRoles" id="admin"}}
+                        {{$admin.name}} &nbsp;
+                    {{/volist}}
+                </div>
+            </div>
+            <div class="col-sm-9">
+                <label class="col-sm-2 control-label no-padding-right">参与角色：</label>
+                <div class="col-sm-7 align-left">
+                    {{volist name="usedRoles" id="role"}}
+                        {{$role.name}}&nbsp;
+                    {{/volist}}
+                </div>
+            </div>
+            <div class="col-sm-9">
+                <label class="col-sm-2 control-label no-padding-right">使用的模板：</label>
+                <div class="col-sm-7 align-left">
+                    {{volist name="tempList" id="temp"}}
+                        {{$temp.name}}&nbsp;
+                    {{/volist}}
+                </div>
             </div>
         </div>
+      
+            <div class="col-xs-9 center">
+                <h3 class="header">
+                    现有流程
+                </h4>
+            </div>
+            <div class="col-xs-9 center">
+                {{empty name="flows"}}
+                    暂无
+                {{else}}
+                <form class="form-horizontal widget-box " role="form" style="min-height: 300px;">
+
+                    <h3 class=""> {{$proInfo.name}} </h3>
+                    <div class="space-6"></div>
+                    
+                {{volist name="flows" id="flow"}}
+                    <div class=" myStep step_{{$key+1}}" >
+                        {{if condition="!$flow['temps']"}}
+                            <?php continue;?>
+                        {{/if}}
+                        
+                        <span class="pull-right inline label-sm">{{$key+1}}/{{$proInfo.steps}}</span>
+                        {{foreach $flow['temps'] as $id}}
+                            <?php
+                                if(isset($tempFields[$id])){
+                                    $fieldList = $tempFields[$id];
+                                }else{
+                                    continue;
+                                }
+                            ?>
+                            <h4>{{$tempList[$id]['name']}}</h4>
+                            <div class="hr hr-dotted"></div>
+                            {{volist name="fieldList" id="field"}}
+                                <div class="row align-left">
+                                        <label class="col-sm-4 control-label no-padding-right" for="field[{{$field.id}}]"> 
+                                        <?php if ($field['is_require']){ ?><i style="color: red;">*</i><?php }?> 
+                                        {{$field.name}}：
+                                        </label>
+                                    
+                                        {{switch name="field.data_type"}}
+                                        {{case value="$Think.DT_TEXT" break="1"}}
+                                        <div class="col-sm-6">
+                                            <input class="col-xs-9 form-control" type="text" name="field[{{$field.id}}]" id="field_{{$field.id}}" maxlength="32" /> 
+                                        {{/case}}
+                                        {{case value="$Think.DT_NUMBER" break="1"}}
+                                        <div class="col-sm-2">
+                                            <input class="col-xs-9 form-control" type="number" name="field[{{$field.id}}]" id="field_{{$field.id}}" maxlength="32" /> 
+                                        {{/case}}
+                                        {{case value="$Think.DT_DATE" break="1"}}
+                                        <div class="col-sm-3">
+                                            <div class="input-group">
+                                            <input id="date-timepicker_{{$field.id}}" name="field[{{$field.id}}]" type="text" class="form-control">
+                                            <span class="input-group-addon">
+                                                <i class="fa fa-clock-o bigger-110"></i>
+                                            </span>
+                                            <script>
+                                                $(function(){
+                                                    $('#date-timepicker_{{$field.id}}').datetimepicker({
+                                                format: 'YYYY-MM-DD H:mm:ss',//use this option to display seconds
+                                                icons: {
+                                                    time: 'fa fa-clock-o',
+                                                    date: 'fa fa-calendar',
+                                                    up: 'fa fa-chevron-up',
+                                                    down: 'fa fa-chevron-down',
+                                                    previous: 'fa fa-chevron-left',
+                                                    next: 'fa fa-chevron-right',
+                                                    today: 'fa fa-arrows ',
+                                                    clear: 'fa fa-trash',
+                                                    close: 'fa fa-times'
+                                                }
+                                                }).next().on(ace.click_event, function(){
+                                                    $(this).prev().focus();
+                                                });
+                                                });
+                                            </script>
+                                            </div>
+                                        {{/case}}
+                                        {{case value="$Think.DT_RADIO" break="1"}}
+                                        <div class="col-sm-6">
+                                        <div class="radio">
+                                        <?php
+                                            if($field['options']){
+                                                $vals = explode('|',$field['options']);
+                                                foreach($vals as $v){
+                                                    if(trim($v) == ''){
+                                                        continue;
+                                                    }
+                                                    echo '<label>
+                                                            <input name="field['.$field['id'].']" type="radio" value="'.$v.'" class="ace">
+                                                            <span class="lbl">'.$v.'</span>
+                                                        </label>';
+                                                }
+                                            }
+                                        ?>
+                                        </div>
+                                        {{/case}}
+                                        {{case value="$Think.DT_CHECKBOX" break="1"}}
+                                        <div class="col-sm-6">
+                                        <div class="checkbox">
+                                            <?php
+                                                if($field['options']){
+                                                    $vals = explode('|',$field['options']);
+                                                    foreach($vals as $v){
+                                                        if(trim($v) == ''){
+                                                            continue;
+                                                        }
+                                                        echo '<label>
+                                                                <input name="field['.$field['id'].'][]" type="checkbox" value="'.$v.'" class="ace">
+                                                                <span class="lbl">'.$v.'</span>
+                                                            </label>';
+                                                    }
+                                                }
+                                            ?>
+                                            </div>
+                                        {{/case}}
+                                        {{case value="$Think.DT_SELECT" break="1"}}
+                                        <div class="col-sm-4">
+                                        <select class="form-control" id="field[{{$field.id}}]">
+                                            <option value="">请选择</option>
+                                        <?php
+                                            if($field['options']){
+                                                $vals = explode('|',$field['options']);
+                                                foreach($vals as $v){
+                                                    if(trim($v) == ''){
+                                                        continue;
+                                                    }
+                                                    echo '<option value="'.$v.'">'.$v.'</option>';
+                                                }
+                                            }
+                                        ?>
+                                        </select>
+                                        {{/case}}
+                                        {{case value="file" break="1"}}
+                                        <div class="col-sm-4">
+                                            <input class="col-xs-9 form-control" type="file" name="field[{{$field.id}}]" id="field_{{$field.id}}" /> 
+                                        {{/case}}
+                                        {{case value="$Think.DT_TEXTAREA" break="1"}}
+                                        <div class="col-sm-4">
+                                        <textarea name="field[{{$field.id}}]" value="" id="field_{{$field.id}}" class="col-xs-10" rows="4"
+                                                    style="overflow: hidden; word-wrap: break-word;"></textarea>
+                                        {{/case}}
+                                        {{/switch}}
+                                        
+                                    </div>
+                                </div>
+                                <div class="space-6"></div>
+                            {{/volist}}
+                        {{/foreach}}
+                        
+                    </div>
+                {{/volist}}
+                {{if condition="$proInfo['steps'] > 1"}}
+                            <div class="space-4"></div>
+                            <div class="row align-left step_last">
+                                <label class="col-sm-4 control-label no-padding-right" for="check_user"> <i style="color: red;">*</i> 提交审核：</label>
+                                    
+                                <div class="col-sm-4">
+                                    <select class="form-control" id="field[{{$field.id}}]">
+                                        <option value="0">请选择</option>
+                                        <option value="1">管理员</option>
+                                    </select>                                            
+                                </div>
+                            </div>
+                            <div class="space-4"></div>
+                        {{/if}}
+                  <div class="hr hr-dotted"></div>
+                <div class="row center">
+                    
+                    <button id="btn_pass" style="display: none;" class="btn_check btn btn-sm btn-success" type="button">
+                        <i class="ace-icon fa fa-check bigger-110"></i> 通过
+                    </button>
+                    <button id="btn_deny" style="display: none;" class="btn_check btn btn-sm btn-danger" type="button">
+                        <i class="ace-icon fa fa-check bigger-110"></i> 驳回 
+                    </button>
+
+                    <button id="btn_submit" class="btn_check btn btn-sm btn-info" type="button" >
+                        <i class="ace-icon fa fa-check bigger-110"></i> 提交 
+                    </button>
+
+                    <button id="btn_cancel" class="btn_check btn btn-sm btn-danger " type="button">
+                        <i class="ace-icon fa fa-times"></i> 取消 
+                    </button>
+                    </div>
+                    <div class="space-4"></div>
+                </form>
+                <div class="space-6"></div>
+                <div class="col-xs-12 center">
+                    <button id="del_step" style='display:{{if condition="$proInfo.steps == 1"}}inline{{else}} none {{/if}};' class="btn btn-danger btn-xs" title="删除" onclick="delStep()">删除该步</button>
+                    {{if condition="$proInfo.steps > 1"}}
+                    <button class="btn btn-primary btn-xs" onclick="nextStep()">下一步</button>
+                    {{/if}}
+                </div>
+                {{/empty}}
+            </div>
     </div>
 </div>
+
 <!-- 增加字段弹出框-->
 <div id="flow_add_modal" class="modal fade">
     <div class="modal-dialog" style="position: relative;top:40%;transform: translateY(-50%);min-width: 1024px;">
@@ -48,9 +256,12 @@
                 <form class="form-horizontal" id="form_flow_add" role="form">
                     
                     <div class="form-group">
-                        <label class="col-sm-3 control-label no-padding-right" for="isRequire"><i style="color: red;">*</i>使用的模板：</label>
+                        <label class="col-sm-3 control-label no-padding-right" for="isRequire">{{if condition="$proInfo.steps < 1"}}<i style="color: red;">*</i>{{/if}}使用的模板：</label>
                         <div class="col-sm-8 checkbox">
                         {{volist name="tempList" id="temp"}}
+                        {{if condition="!in_array($temp['id'],$unused)"}}
+                            <?php continue;?>
+                        {{/if}}
                         <div class="col-sm-4">
                         <label>
                             <input name="temps[]" type="checkbox" id="temps_{{$temp.id}}"  value="{{$temp.id}}" class="ace">
@@ -62,34 +273,14 @@
                     </div>
                     
                     <div class="form-group">
-                        <label class="col-sm-3 control-label no-padding-right" for="isRequire">参与的角色：</label>
-                        <div class="col-sm-8 checkbox">
-                            <span class="red">不选择则所有人员可用</span><br/>
-                        {{if condition="$roles"}}
-                            {{volist name="roles" id="role"}}
-                            <div class="col-sm-4">
-                            <label>
-                                <input name="roles[]" type="checkbox" id="role_{{$role.id}}"  value="{{$role.id}}" class="ace">
-                                <span class="lbl">{{$role.name}}</span>
-                            </label>
-                            </div>
-                            {{/volist}}
-                        {{else}}
-                            <div>不限制</div>
-                        {{/if}}
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="col-sm-3 control-label no-padding-right" for="isRequire" title="有审核,经过管理人员审核后才可进入下一步,否则后续流程无效">是否审核：</label>
-                        <div class="col-sm-9 checkbox">
+                        <label class="col-sm-3 control-label no-padding-right" for="isRequire" title="开启时,经过管理人员审核后才可进入下一步">是否审核：</label>
+                        <div class="col-sm-9 checkbox"  title="开启时,经过管理人员审核后才可进入下一步">
                             <label>
                                 <input name="ischeck" id="ischeck" class="ace ace-switch ace-switch-6" type="checkbox">
                                 <span class="lbl"></span>
                             </label>
                         </div>
                     </div>
-                   
                 </form>
             </div>
             <div class="modal-footer no-margin-top center">
@@ -104,39 +295,83 @@
     </div>
 </div>
 <script>
-    var totalStep = {{$info.steps}};
-    function delStep(id, name) {
-        if (parseInt(id) < 1) {
-            showTipError('参数错误');
-            return false;
+    var totalStep = {{$proInfo.steps}};
+    var curStep = 0;
+    function nextStep(){
+        if(curStep == totalStep){
+            curStep = 0;
         }
-        
-        $('#form_pro_flow').ace_ajax('post', '/api/v1/project/flow', { id: id,p_id:{{$pid}} }, false, {
-            dataType: 'json',
-            method: 'DELETE',
-            success: function (res) {
-                if (res.status == 200) {
-                    showTipOk(res.msg)
-                    window.location.reload();
-                } else {
-                    showTipError(res.msg)
+        curStep++;
+        if(curStep == totalStep){
+            $('.step_last').hide();
+        }
+        $('.btn_check').hide();
+        if(curStep == 1 || curStep == totalStep){
+            $('#btn_submit,#btn_cancel').show();
+        }else{
+            $('#btn_pass,#btn_deny').show();
+        }
+        for(var i = 1;i <= totalStep;i++){
+            var d = i == curStep ? false : true;
+            $('.step_'+i+' input').attr({disabled:d});
+            $('.step_'+i+' select').attr({disabled:d});
+            console.log('step_'+i,d);
+        }
+        $('#del_step').hide();
+        $('.step_'+curStep).show();
+        $('#cur_step_index').html(curStep);
+        if(curStep == totalStep){
+            $('#del_step').show();
+        }
+    }
+    function delStep() {
+        bootbox.confirm({
+            message: '确认删除第' + curStep + '步?',
+            buttons: {
+                confirm: {
+                    label: "确认",
+                    className: "btn-primary btn-sm",
+                },
+                cancel: {
+                    label: "取消",
+                    className: "btn-sm",
                 }
             },
-        });
-        
+            callback: function (res) {
+                if (!res) {
+                    return true;
+                }
+                $.ajax({
+                    url:'{{$baseUrl}}/api/v1/project/flow',
+                    type:'DELETE', 
+                    data:{step:curStep,p_id:{{$proInfo.id}} }, 
+                    dataType:'json',
+                    success: function (res) {
+                        checkLoginExpire(res);
+                        if (res.status == 200) {
+                            showTipOk(res.msg)
+                            window.location.reload();
+                        } else {
+                            showTipError(res.msg)
+                        }
+                    }
+                });
+            }
+        })   
     }
 
     $(function () {
-        
+        nextStep();
         $('#flow_add').click(function () {
             var has_check = {{$has_check}};
-            if(!has_check){
+            if(totalStep && !has_check){
                 showTipError('上一步无需审核,无法新增步骤');
                 return false;
             }
             $('#flow_add_modal').modal('show');
             $('#form_flow_add')[0].reset();
         })
+        {{if condition="$proInfo.steps < 1"}}
         $('#form_flow_add').validate({
             errorElement: 'div',
             errorClass: 'help-block',
@@ -174,18 +409,14 @@
                 else error.insertAfter(element);
             }
         });
-       
+       {{/if}}
         //添加
         $('#submit_add').click(function () {
+            {{if condition="$proInfo.steps < 1"}}
             if (!$('#form_flow_add').valid()) {
                 return false;
             }
-            var unused = {{$tempList ? 1 : 0}};
-            if(!unused){
-                showTipError('无可用模板');
-                return 
-            }
-        
+            {{/if}}
             var temps = [];
             var roles = [];
             $('input[name="roles[]"]:checked').each(function(){
@@ -196,15 +427,16 @@
             })
 
             var data = {
-                p_id: '{{$pid}}',
-                step: {{$info.steps+1}},
+                p_id: '{{$p_id}}',
+                step: {{$proInfo.steps+1}},
                 temps:temps.join(','),
                 roles:roles.join(','),
                 ischeck: $('#ischeck').is(':checked') ? 1 : 0
              };
-            $('#flow_add_modal').ace_ajax('post', '/api/v1/project/flow', data, false, {
+            $('#flow_add_modal').ace_ajax('post', '{{$baseUrl}}/api/v1/project/flow', data, false, {
                 dataType: 'json',
                 success: function (res) {
+                    checkLoginExpire(res);
                     if (res.status == 200) {
                         $('#flow_add_modal').modal('hide');
                         $('.modal-backdrop').remove();

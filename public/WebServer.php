@@ -2,7 +2,7 @@
 
 use Workerman\Worker;
 class WsServer extends Worker{
-    public $name = 'workerman';
+    public $name = 'wm_pro_service';
     public $count = 1;
     public $clientInfo = [];//客户端连接
     public $adminsInfo = [];//客服端连接
@@ -13,17 +13,19 @@ class WsServer extends Worker{
         parent::__construct($dsn);
         $this->onWorkerStart = function(){
             init();
-            myLog('work start');
+            serverLog('work start');
         };
-        $this->onConnect = function($connect){};
+        $this->onConnect = function($connect){
+            $connect->send( $this->format('ok',200,'connected') );
+        };
         $this->onMessage = function($connect,$msg)
         {
             $data = json_decode($msg,true);
             if(!$data || !isset($data['action']) || !isset($data['uid']) || !isset($data['role']) ) {
-                myLog('未识别的消息：'.$msg);
-                return $connect->send('未识别消息：'. $msg);
+                serverLog('illegal msg：'.$msg);
+                return $connect->send('illegal msg:'. $msg);
             }
-            myLog($msg);
+            serverLog($msg);
             switch($data['action']){
                 case 'init':
                     $uid = $data['uid']; //客服和用户自己的uid
@@ -80,7 +82,7 @@ class WsServer extends Worker{
                     
                     if($role == 'user'){
                         $toUid = $connect->toUid;
-                        if(isset($this->adminsInfo[$toUid])){
+                        if(isset($this->adminsInfo[$toUid]) ){
                             $this->connections[$this->adminsInfo[$toUid]['connect']]->send($this->format(json_encode(['msg'=>$msg,'uid'=>$uid])));
                         }
                         $apiData['from']= $uid;
@@ -94,13 +96,20 @@ class WsServer extends Worker{
                     }
                     feedBackMsg($apiData);
                 break;
+            case 'ping':
+                break;
+                case 'close':
+                break;
             }
 
         };
         $this->onClose = function($connect)
         {
-            $role = $connect->role;
-            $uid = $connect->uid;
+            $role = isset($connect->role) ?$connect->role:'';
+            $uid = isset($connect->uid) ?$connect->uid:0;
+            if(!$role || !$uid){
+                return false;
+            }
             if($role == 'user'){
                 unset($this->clientInfo[$uid]);
                 $toUid = $connect->toUid;
@@ -108,7 +117,9 @@ class WsServer extends Worker{
                     return false;
                 }
                 $this->adminsInfo[$toUid]['num']--;
-                $this->connections[$this->adminsInfo[$toUid]['connect']] ->send($this->format($uid,200,'close'));
+                if(isset($this->connections[$this->adminsInfo[$toUid]['connect']])){
+                    $this->connections[$this->adminsInfo[$toUid]['connect']] ->send($this->format($uid,200,'close'));
+                }
                 unset($this->adminsInfo[$toUid]['client'][$uid]);
             }else if($role == 'admin'){
                 $this->adminsInfo[$uid]['status']= 0;
@@ -119,7 +130,7 @@ class WsServer extends Worker{
         {
             $msg = 'error occured, code:'.$code.'--msg:'.$msg;
             $msg .= '--data:'.json_encode(['role'=>$connect->role,'uid'=>$connect->uid]);
-            myLog($msg);
+            serverLog($msg);
         };
     }
     /** 

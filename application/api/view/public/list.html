@@ -1,0 +1,218 @@
+{__NOLAYOUT__}
+<html lang="en">
+
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <meta charset="utf-8" />
+    <title>{{$proInfo.name}}</title>    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+    <!-- bootstrap & fontawesome -->
+    <link rel="stylesheet" href="{{$baseUrl}}/html/assets/css/bootstrap.css" />
+    <link rel="stylesheet" href="{{$baseUrl}}/html/components/font-awesome/css/font-awesome.min.css" />
+    <!-- page specific plugin styles -->
+    <!-- text fonts -->
+    <link rel="stylesheet" href="{{$baseUrl}}/html/assets/css/ace-fonts.css" />
+    <!-- ace styles -->
+    <link rel="stylesheet" href="{{$baseUrl}}/html/assets/css/ace.css" class="ace-main-stylesheet" id="main-ace-style" />
+    <!--[if lte IE 9]>
+        <link rel="stylesheet" href="/html/assets/css/ace-part2.css" class="ace-main-stylesheet" />
+    <![endif]-->
+    <link rel="stylesheet" href="{{$baseUrl}}/html/assets/css/ace-skins.css" />
+    <link rel="stylesheet" href="{{$baseUrl}}/html/assets/css/ace-rtl.css" />
+    <!--[if lte IE 9]>
+      <link rel="stylesheet" href="/html/assets/css/ace-ie.css" />
+    <![endif]-->
+    <!-- inline styles related to this page -->
+    <!-- ace settings handler -->
+    <script src="{{$baseUrl}}/html/assets/js/ace-extra.js"></script>
+    <script src="{{$baseUrl}}/html/components/jquery.min.js"></script>
+    <script src="{{$baseUrl}}/html/components/jquery.validate.min.js"></script>
+    <!-- HTML5shiv and Respond.js for IE8 to support HTML5 elements and media queries -->
+    <!--[if lte IE 8]>
+    <script src="/html/components/html5shiv/dist/html5shiv.min.js"></script>
+    <script src="/html/components/respond/dest/respond.min.js"></script>
+    <![endif]-->
+    <style>
+        .tips {
+            display: none;
+            position: fixed;
+            top: 20%;
+            left: 50%;
+            min-width: 200px;
+            max-width: 700px;
+            transform: translate(-50%, -50%);
+            z-index: 99999;
+            text-align: center;
+            padding: 15px;
+            border-radius: 5px;
+        }
+
+        .tips-success {
+            color: #3c763d;
+            background-color: #dff0d8;
+            border-color: #d6e9c6;
+        }
+
+        .tips-info {
+            color: #31708f;
+            background-color: #d9edf7;
+            border-color: #bce8f1;
+        }
+
+        .tips-warning {
+            color: #8a6d3b;
+            background-color: #fcf8e3;
+            border-color: #faebcc;
+        }
+
+        .tips-danger {
+            color: #a94442;
+            background-color: #f2dede;
+            border-color: #ebccd1;
+        }
+    </style>
+</head>
+<body>
+<div id="user-tips" class="tips"></div>
+<div class="main-container" id="main-container">
+        <!-- PAGE CONTENT BEGINS -->
+    <div class="main-content">
+        
+        <div class="page-content col-xs-12">
+            <h3 class="center">{{$proInfo.name}}</h3>
+            <div class="col-sm-12">
+
+                <!-- #section:elements.accordion -->
+                <div id="accordion" class="accordion-style1 panel-group">
+                    {{volist name="list" id="item"}}
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h4 class="panel-title">
+                                <a class="accordion-toggle collapsed" data-toggle="collapse" data-parent="#accordion" href="#list-{{$item.id}}" aria-expanded="false">
+                                    <i class="bigger-110 ace-icon fa fa-angle-right" data-icon-hide="ace-icon fa fa-angle-down" data-icon-show="ace-icon fa fa-angle-right"></i>
+                                    &nbsp;{{$firstTitle.name}}-{{$key+1}}: {{$item['userData'][$firstTitle['id']]['val']}}
+                                </a>
+                            </h4>
+                        </div>
+
+                        <div class="panel-collapse collapse" id="list-{{$item.id}}" aria-expanded="false" style="height: 0px;">
+                            <div class="panel-body">
+                                {{volist name="titles" id="st"}}
+                                    <?php
+                                    if(!isset($item['userData'][$st['id']])){
+                                        continue;
+                                    }
+                                    ?>
+                                <p>
+                                {{if $st['data_type'] == $Think.DT_TEXTAREA}}
+                                    <?php 
+                                        echo str_replace("\r\n","<br/>",$item['userData'][$st['id']]['val']);
+                                    ?>
+                                    {{else}}
+                                    {{$item['userData'][$st['id']]['val']}} 
+                                {{/if}}
+                                </p>
+                                {{/volist}}
+                            </div>
+                        </div>
+                    </div>
+                    {{/volist}}
+                </div>
+
+                <!-- /section:elements.accordion -->
+            </div>
+            
+            <script src="{{$baseUrl}}/html/components/bootstrap.min.js"></script>
+            <!-- page specific plugin scripts -->
+            <script src="{{$baseUrl}}/html/assets/js/user_common.js"></script>
+            <!-- ace scripts -->
+            <script src="{{$baseUrl}}/html/components/bootbox.min.js"></script>
+            <script src="{{$baseUrl}}/html/components/moment.min.js"></script>
+            <script src="{{$baseUrl}}/html/components/bootstrap-datetimepicker.min.js"></script>
+            <script src="{{$baseUrl}}/html/assets/js/src/elements.scroller.js"></script>
+            <!-- <script src="/html/assets/js/src/elements.colorpicker.js"></script> -->
+            <!-- <script src="/html/assets/js/src/elements.fileinput.js"></script> -->
+            <script src="{{$baseUrl}}/html/assets/js/src/elements.typeahead.js"></script>
+            <!-- <script src="/html/assets/js/src/elements.wysiwyg.js"></script> -->
+            <!-- <script src="/html/assets/js/src/elements.spinner.js"></script> -->
+            <!-- <script src="/html/assets/js/src/elements.treeview.js"></script> -->
+            <script src="{{$baseUrl}}/html/assets/js/src/ace.js"></script>
+            <script src="{{$baseUrl}}/html/assets/js/src/ace.basics.js"></script>
+            <script src="{{$baseUrl}}/html/assets/js/src/ace.scrolltop.js"></script>
+            <script src="{{$baseUrl}}/html/assets/js/src/ace.ajax-content.js"></script>
+            <script src="{{$baseUrl}}/html/assets/js/src/ace.touch-drag.js"></script>
+            <!-- <script src="/html/assets/js/src/ace.widget-box.js"></script> -->
+            <script src="{{$baseUrl}}/html/assets/js/src/ace.settings.js"></script>
+            <script src="{{$baseUrl}}/html/assets/js/src/ace.settings-rtl.js"></script>
+            <script src="{{$baseUrl}}/html/assets/js/src/ace.settings-skin.js"></script>
+           
+        </div>
+    </div>
+</div>
+<script>
+    function viewData(dataid){
+        var id = parseInt(dataid);
+        var isOwn = {{$isOwn ? $isOwn : 0}};
+        if(isOwn == 1){
+            m = 'mydata';
+        }else if(isOwn == 2){
+            m = 'mycheck';
+        }else{
+            m = 'data';
+        }
+        window.location.href = '{{$baseUrl}}/api/v1/'+m+'/view/'+dataid;
+    }
+
+    function delData(id, name) {
+        if (parseInt(id) < 1) {
+            showTipError('参数错误');
+            return false;
+        }
+        bootbox.confirm({
+            message: '确认删除(' + name + ')?',
+            buttons: {
+                confirm: {
+                    label: "确认",
+                    className: "btn-primary btn-sm",
+                },
+                cancel: {
+                    label: "取消",
+                    className: "btn-sm",
+                }
+            },
+            callback: function (res) {
+                if (!res) {
+                    return true;
+                }
+                $('#simple-table').ace_ajax('post', '{{$baseUrl}}/api/v1/data', { did: id }, false, {
+                    dataType: 'json',
+                    method: 'DELETE',
+                    success: function (res) {
+                        if (res.status == 200) {
+                            showTipOk(res.msg)
+                            window.location.reload();
+                        } else {
+                            showTipError(res.msg)
+                        }
+                    },
+                })
+            }
+        })
+    }
+    $(function () {
+        $('#data_add').click(function () {
+            var status = {{$proInfo.status}};
+            if(status < 1){
+                showTipOk('项目已隐藏,无法新增');
+                return;
+            }
+             window.location.href="{{$baseUrl}}/api/v1/data/add/{{$proInfo.uuid}}";
+        })
+        $('#data_return').click(function () {
+             window.history.go(-1);
+        })
+    });
+</script>
+
+</body>
+</html>

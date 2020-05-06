@@ -1,0 +1,67 @@
+<title>数据管理</title>
+
+<div class="page-header">
+    <h1>
+        我的
+        <small>
+            <i class="ace-icon fa fa-angle-double-right"></i>
+            审批列表
+        </small>
+    </h1>
+</div>
+
+<div class="row">
+    <div class="col-xs-12">
+        <!-- PAGE CONTENT BEGINS -->
+        
+        <div class="row">
+            <div class="col-xs-12">
+                <table id="simple-table" class="table table-bordered table-hover" style="table-layout: fixed;">
+                    <thead>
+                        <tr>
+                            <th class="col-xs-1 center">序号</th>
+                            <th class="col-xs-4 center">项目名</th>
+                            <th class="col-xs-1 center">数据量</th>
+                            <th class="col-xs-1 center">状态</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{volist name="list.data" id="item" }}
+                        <tr>
+                            <td class="center">
+                                <?php echo $key + ($pagesize * ($page-1))+1; ?>
+                            </td>
+                            <td class="center">{{$item.name}}</td>
+                            <td class="center">{{$item.total}}</td>
+                            <td class="center">{{$item.status == 1 ? '正常' : '隐藏'}}</td>
+                            <td>
+                                <button class="btn btn-info btn-xs" title="查看" onclick="viewData('{{$item.uuid}}')">查看</button>
+                            </td>
+                        </tr>
+                        {{/volist}} </tbody>
+                </table>
+                <div class="col-xs-2">
+                    <div class="dataTables_info" id="dynamic-table_info" role="status" aria-live="polite">
+                        {{$pagesize}}条/页,共{{$list.total}}条
+                    </div>
+                </div>
+
+                <div class="col-xs-6 pull-right">
+                    <div class="dataTables_paginate paging_simple_numbers" id="table_paginate">
+                        {{$paginate}}
+
+                    </div>
+                </div>
+            </div> <!-- /.span -->
+        </div>
+    </div>
+</div>
+
+
+<script>
+    function viewData(uuid){
+        window.location.href = '{{$baseUrl}}/api/v1/mycheck/'+uuid;
+    }
+
+</script>

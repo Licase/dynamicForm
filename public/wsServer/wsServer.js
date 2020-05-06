@@ -4,7 +4,8 @@
 var baseHost = window.location.origin;
 
 function WsServer(dsn){
-	this.status = 0;
+    this.status = 0;
+    var uidHistory = [];
 	var ws = new WebSocket(dsn);
 	//readyState属性返回实例对象的当前状态，共有四种。
 	//CONNECTING：值为0，表示正在连接。
@@ -20,14 +21,14 @@ function WsServer(dsn){
         msg.action = 'init';
         ws.send(JSON.stringify(msg));
         if(info.role == 'user'){
-            showMsg(0,'连接已建立',2,0);
+            showMsg(0,'连接已建立',2);
         }
 	};
 	 
 	//【用于指定收到服务器数据后的回调函数】
 	//【服务器数据有可能是文本，也有可能是二进制数据，需要判断】
 	ws.onmessage = function (event) {
-        console.log("Received Message: " + event.data);
+        console.log("getMsg: ", event.data);
 	    if (typeof event.data == 'string') {
             var c = JSON.parse(event.data);
             if(c && c.status ){
@@ -43,7 +44,10 @@ function WsServer(dsn){
                                     getHistory(info.uid);
                                 }else{
                                     addClient(userInfo.toUid,userInfo.name);
-                                    getHistory(userInfo.toUid);
+                                    if(!uidHistory[userInfo.toUid]){
+                                        getHistory(userInfo.toUid);
+                                        uidHistory[userInfo.toUid] = 1;
+                                    }
                                     clientInfo[userInfo.toUid] = {name:userInfo.name};
                                 }
                                 this.status = 2;
@@ -59,9 +63,16 @@ function WsServer(dsn){
                         var uid = info.role == 'user' ? 0 : content.uid;
                         statMsg(uid);
                         showMsg(uid,content.msg,0);
+                        msgAudio();
                     break;
+                    case 'connected':
+                        console.log(typeof(init))
+                        if(typeof(init) === 'function'){
+                            console.log(1);
+                            init();
+                        }
+                        break;
                     case 'close':
-                        userLeave(c.msg,1);
                         break;
                 }   
             }else{
@@ -76,6 +87,8 @@ function WsServer(dsn){
 	 
 	//[【于指定连接关闭后的回调函数。】
 	ws.onclose = function (evt) {
+        closeWs()
+        this.status = 0;
         // showMsg(0,'连接已断开',2);
 	};
 	ws.onerror = function(event){
@@ -83,7 +96,14 @@ function WsServer(dsn){
 	};
 	return ws;
 }
-
+function msgAudio(){
+    var audio = document.getElementById('msg_audio'); 
+    if(audio){
+        audio.volume=1.0;
+        console.log(1);
+        audio.play();
+    }
+}
 function getHistory(uid){
     $.ajax({
         url: baseHost+'/msg/v1/msg' ,
@@ -92,7 +112,7 @@ function getHistory(uid){
         dataType:'json',
         success:function(res){
             if(res && res.status == 200 && res.data){
-                var len = res.data.length;
+                var flag = true;
                 for(var i = res.data.length-1 ;i >= 0;i--){
                     var obj = res.data[i];
                     var type,uid,msg;
@@ -106,9 +126,12 @@ function getHistory(uid){
                     if(info.role == 'user'){
                         uid = 0;
                     }
+                    if(flag){
+                        showMsg(uid,obj.create_time,2);
+                        flag = false;
+                    }
                     
-                    showMsg(uid,obj.create_time,2,0);
-                    showMsg(uid,msg,type,0,0);
+                    showMsg(uid,msg,type);
                 }
             }
         }
@@ -116,9 +139,6 @@ function getHistory(uid){
     
 }
 
-function userLeave(uid){
-    
-}
 //更新消息统计数字
 function statMsg(uid){
     if(info.role == 'user' || uid == curUid){
@@ -192,21 +212,7 @@ function delCookie(name)
         document.cookie= name + "="+cval+";expires="+exp.toGMTString();
     }
 }
-function getUuid(){
-	var uuid = getCookie('user_uuid');
-	if(!uuid){
-		var d = new Date().getTime();
-		uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-				var r = (d + Math.random()*16)%16 | 0;
-                d = Math.floor(d/16);
-                var s =(c=='x' ? r : (r&0x3|0x8)).toString(16); 
-				return s;
-        });
-        console.log(uuid)
-		setCookie('user_uuid',uuid,3600000);
-	}
-	return uuid;
-}
+
 function onerror(event){
     
 }
@@ -214,14 +220,16 @@ function getDateTime(){
     var myDate = new Date();
     return myDate.getFullYear()+'-'+ (myDate.getMonth() +1 )+'-'+ myDate.getDate()+' '+' '+myDate.getHours()+':'+myDate.getMinutes()+':'+ myDate.getSeconds();
 }
+/**
+ *@param uid 消息框id 
+*/
 function sendMsg(uid){
     var msg = $('#text').val();
 	if(!msg || wsObj.status != 2){
-        console.log(msg,wsObj.status);
 		return ;
     }
     var t = formatMsg(msg);
-    console.log('send message:'+t);
+    console.log('send message:',t);
     wsObj.send(t);
     showMsg(uid,msg,1);
     $('#text').val('').focus();
@@ -231,12 +239,9 @@ function sendMsg(uid){
  * @param {*} msg 
  * @param {*} isSelf 0：对方,1:自己，2：系统
  */
-function showMsg(uid,msg,isSelf,isShowTime){
+function showMsg(uid,msg,isSelf){
     var html = '';
-    isShowTime = isShowTime == undefined ? 1 : isShowTime;
-    if(isShowTime){
-        html += '<div class="msg msg-center">'+(getDateTime())+'</div>';
-    }
+
     var name = '';
     switch(isSelf){
         case 0:

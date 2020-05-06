@@ -10,19 +10,19 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
 
 		<!-- bootstrap & fontawesome -->
-		<link rel="stylesheet" href="/html/assets/css/bootstrap.css" />
-		<link rel="stylesheet" href="/html/components/font-awesome/css/font-awesome.css" />
+		<link rel="stylesheet" href="{{$baseUrl}}/html/assets/css/bootstrap.css" />
+		<link rel="stylesheet" href="{{$baseUrl}}/html/components/font-awesome/css/font-awesome.css" />
 
 		<!-- text fonts -->
-		<link rel="stylesheet" href="/html/assets/css/ace-fonts.css" />
+		<link rel="stylesheet" href="{{$baseUrl}}/html/assets/css/ace-fonts.css" />
 
 		<!-- ace styles -->
-		<link rel="stylesheet" href="/html/assets/css/ace.css" />
+		<link rel="stylesheet" href="{{$baseUrl}}/html/assets/css/ace.css" />
 
 		<!--[if lte IE 9]>
 			<link rel="stylesheet" href="/html/assets/css/ace-part2.css" />
 		<![endif]-->
-		<link rel="stylesheet" href="/html/assets/css/ace-rtl.css" />
+		<link rel="stylesheet" href="{{$baseUrl}}/html/assets/css/ace-rtl.css" />
 
 		<!--[if lte IE 9]>
 		  <link rel="stylesheet" href="/html/assets/css/ace-ie.css" />
@@ -46,7 +46,7 @@
 								<h1>
 									<i class="ace-icon fa fa-leaf green"></i>
 								
-									<span class="grey" id="id-text2">流程管理系统</span>
+									<span class="grey" id="id-text2">{{$title ?:'项目管理系统'}}</span>
 								</h1>
 								
 							</div>
@@ -109,7 +109,8 @@
 		<!-- basic scripts -->
 
 		<!--[if !IE]> -->
-		<script src="/html/components/jquery.min.js"></script>
+		<script src="{{$baseUrl}}/html/components/jquery.min.js"></script>
+		<script src="{{$baseUrl}}/html/assets/js/user_common.js"></script>
 
 		<!-- <![endif]-->
 
@@ -121,7 +122,9 @@
 		</script>
 
 		<!-- inline scripts related to this page -->
+		
 		<script type="text/javascript">
+			baseUrl = "{{$baseUrl}}";
 			jQuery(function($) {
 			 $(document).on('click', '.toolbar a[data-target]', function(e) {
 				e.preventDefault();
@@ -133,13 +136,16 @@
 				 var user = $('#user').val();
 				 var pwd = $('#pwd').val();
 				$.ajax({
-					url:'/login',
+					url:baseUrl+'/login',
 					type:'post',
 					data:{user:user,pwd:pwd},
 					dataType:'json',
 					success:function(res){
 						if(res.status == 200){
-							window.location.href = '/api/v1/home';
+							showTipOk(res.msg);
+							window.location.href = baseUrl+'/api/v1/home';
+						}else{
+							showTipError(res.msg);
 						}
 					}
 				})

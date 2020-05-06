@@ -6,12 +6,14 @@ use app\api\controller\Base as Controller;
 use app\api\model\Admin as ModelAdmin;
 use app\api\model\AdminRole;
 use app\api\model\Role;
+use think\Cache;
 use think\Exception;
+use think\Session;
 
 class Admin extends Controller
 {
     /**
-     * 获取项目列表
+     * 获取管理员列表
      */
     function index()
     {
@@ -27,38 +29,35 @@ class Admin extends Controller
         if ($name) {
             $where['name'] = ['like', "%{$name}%"];
         }
-        $total = $model->where($where)->count('id');
+
         $list = [];
         $data = ['list' => [], 'paginate' => ''];
-        if ($total > 0) {
-            if ($page > 1 && $total <= ($page - 1) * $pagesize) {
-                $page = ceil($total / $pagesize);
-            }
-            $modelRole = new AdminRole();
-            $list = $model->where($where)->order('id desc')
-            ->paginate(['list_rows' => $pagesize, 'page' => $page, 'path' => '/api/v1/project'])
-            ->each(function($item,$key)use($modelRole){
-                $item['roles'] = $modelRole->alias('a')->join('tab_role b','a.role_id = b.id')->where(['a.admin_id'=>$item->id])->order('a.role_id asc')->column('b.name');
-                return $item;
-            });
 
-            $paginate = $list->render();
-            $data['paginate'] = $paginate;
-        }
+        $modelRole = new AdminRole();
+        $baseUrl = Cache::get('baseUrl');
+        $list = $model->where($where)->order('id desc')
+        ->paginate(['list_rows' => $pagesize, 'page' => $page, 'path' => $baseUrl.'/api/v1/admin'])
+        ->each(function($item,$key)use($modelRole){
+            $item['roles'] = $modelRole->alias('a')->join('tab_role b','a.role_id = b.id')->where(['a.admin_id'=>$item->id])->order('a.role_id asc')->column('b.name');
+            return $item;
+        });
+
+        $paginate = $list->render();
+        $data['paginate'] = $paginate;
 
         $model = new Role();
         $roles = $model->where(['status'=>1])->field('id,name')->order('name asc')->select();
         $data['roles'] = $roles ? $roles->toArray() : [];
-        $data['list'] = $list;
+        $data['list'] = $list ? $list->toArray():[];
         $data['page'] = $page;
         $data['pagesize'] = $pagesize;
-        $data['total'] = $total;
+
         $data['name'] = $name;
 
         return $this->view->fetch('list', $data);
     }
         /**
-     * 获取项目属性
+     * 获取管理员信息
      */
     function read($uuid)
     {
@@ -70,7 +69,7 @@ class Admin extends Controller
     }
 
     /**
-     * 添加项目
+     * 添加管理员
      */
     function save()
     {
@@ -121,14 +120,14 @@ class Admin extends Controller
             return errorReturn($check);
         }
         unset($data['repasswd']);
-        $data['password'] = password_hash($data['password'],PASSWORD_DEFAULT);
-        $t = $model->where(['name' => $data['name'],'status'=>1 ])->field('id')->find();
+        $data['password'] = getPwdHash($data['password']);
+        $t = $model->where(['account' => $data['account'],'status'=>1 ])->value('id');
         if ($t) {
-            return errorReturn('该姓名已被使用');
+            return errorReturn('该账号已被使用');
         }
         try {
             $data['create_time'] = date('Y-m-d H:i:s');
-            $data['uid'] = getUUid();
+            $data['uuid'] = getUUid();
             $id = $model->insertGetId($data);
             $model = new AdminRole();
             foreach($roles as $role){
@@ -145,7 +144,7 @@ class Admin extends Controller
     }
 
     /**
-     * 编辑项目
+     * 编辑管理员
      */
     function update($uuid)
     {
@@ -166,11 +165,8 @@ class Admin extends Controller
         $model = new ModelAdmin();
        $passwd =  input('passwd');
        $repasswd =  input('repasswd');
-       if($passwd){
-            if($passwd != $repasswd){
-                return errorReturn('两次密码不一致');
-            }
-           $data['password'] = password_hash($passwd,PASSWORD_DEFAULT);
+       if($passwd && $passwd != $repasswd){
+            return errorReturn('两次密码不一致');
        }
         $rule = [
             'name' => 'require|max:32|regex:/[-\w\x{4e00}-\x{9fa5}]+/iu',
@@ -202,6 +198,9 @@ class Admin extends Controller
             return errorReturn('该姓名已被使用');
         }
         try {
+            if($passwd){
+                $data['password'] = getPwdHash($passwd);
+            }
             $model->save($data,['uuid'=>$uuid]);
             $modelRole = new AdminRole();
             $modelRole->where(['admin_id'=>$t['id']])->delete();
@@ -219,13 +218,43 @@ class Admin extends Controller
     //删除管理员
     function del()
     {
-        $id = input('uuid');
-        if(!$id){
+        $uuid = input('uuid');
+        if(!$uuid){
             return errorReturn('非法访问');
         }
 
         $model = new ModelAdmin();
-        $model->where(['uuid' => $id])->update(['status'=>0]);
+        $model->where(['uuid' => $uuid])->update(['status'=>0]);
+
+        (new AdminSupporter())->save(['status'=>0],['uuid'=>$uuid]);
         return sucReturn('删除成功');
+    }
+
+    function modifyPwd(){
+        $old = input('old');
+        $pwd = input('pwd');
+        $repwd = input('repwd');
+        if(!$old || !$pwd){
+            return errorReturn('请输入旧密码或新密码');
+        }
+        if($pwd != $repwd){
+            return errorReturn('2次密码不一致');
+        }
+        if(strlen($pwd) > 32){
+            return errorReturn('密码最长32位');
+        }
+        $model = new ModelAdmin();
+        $info = $model->where(['id'=>$this->user_id])->field('id,password')->find();
+        if(!$info){
+            return errorReturn('修改失败,请刷新页面重试');
+        }
+        if(!checkPwd($old,$info['password'])){
+            return errorReturn('旧密码错误');
+        }
+        $new = getPwdHash($pwd);
+        $model->where(['id'=>$this->user_id])->update(['password'=>$new]);
+        Session::delete('userinfo');
+        return sucReturn('修改成功');
+
     }
 }

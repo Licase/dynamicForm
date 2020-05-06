@@ -11,9 +11,13 @@ use think\Model;
 
 class Project extends Model {
     protected $table = 'tab_project';
-    protected $update_time = false;
-    function __construct($data = [])
-    {
-        parent::__construct($data);
+
+    function getProInfo($uuid,$isId=0){
+        if(!$uuid){
+            return [];
+        }
+        $where = $isId ? ['id'=>$uuid] : ['uuid'=>$uuid];
+        $data = $this->where($where)->field('id,name,status,uuid,total,temps,roles,admin_roles,steps')->find();
+        return $data ? $data->getData() : [];
     }
 }

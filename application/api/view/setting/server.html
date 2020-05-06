@@ -1,0 +1,111 @@
+
+<div class="page-header">
+    <h1>
+        系统设置
+        <small>
+            <i class="ace-icon fa fa-angle-double-right"></i>
+            客服系统设置
+        </small>
+    </h1>
+</div>
+<div class="col-xs-6">
+    <!-- PAGE CONTENT BEGINS -->
+    <button class="btn btn-info" id="save_btn">保存 </button>
+    
+    
+    <div class="hr hr-dotted"></div>
+
+    <form class="form-horizontal" id="form_field_edit" role="form">
+        <div class="form-group">
+            <label class="col-sm-3 control-label no-padding-right" for="name">服务状态：</label>
+            <div class="col-sm-3 checkbox" >
+                <label>
+                    <input id="service_status" class="ace ace-switch ace-switch-6" type="checkbox">
+                    <span class="lbl"></span>
+                </label>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="col-sm-3 control-label no-padding-right" for="name">网页管理地址：</label>
+            <div class="col-sm-6">
+                <input type="text" id="tab_host" maxlength="255" placeholder="" value="{{$tab_host}}" class="col-xs-10">
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="col-sm-3 control-label no-padding-right" for="name">客服后台服务端口：</label>
+            <div class="col-sm-2">
+                <input type="text" id="service_port" maxlength="5" value="{{$service_port}}" class="col-xs-10">
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="col-sm-3 control-label no-padding-right" for="name">访客自动断开时间(秒)：</label>
+            <div class="col-sm-4">
+                <input type="text" id="user_disconnect_second" maxlength="3" value="{{$user_disconnect_second}}" placeholder="范围120-600,默认300" class="col-xs-10">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="col-sm-3 control-label no-padding-right" for="remark">欢迎辞：</label>
+            <div class="col-sm-9">
+                <textarea id="wel_word" class="col-xs-9" placeholder="最多50个字" rows="5"
+                    style="overflow: hidden; word-wrap: break-word; resize: vertical;"
+                    maxlength="50">{{$wel_word}}</textarea>
+            </div>
+        </div>
+        
+    </form>
+</div>
+<script>
+$(function(){
+    var tab_host = $("#tab_host").val();
+    if(!tab_host){
+        var host = window.location.origin;
+        var path = window.location.pathname;
+        var reg = /^(\/.*?)\/api\/v1/;
+        var t = path.match(reg);
+        var f = '/';
+        if(t){
+            f = t[1];
+        }
+        $('#tab_host').val(host+f);
+    }
+
+    $('#save_btn').click(function(){
+        var tab_host = $("#tab_host").val();
+        var service_port = $("#service_port").val() || 8090;
+        if(service_port < 1 || service_port>65535){
+            showTipError('客服后台服务端口错误');
+            return;
+        }
+        var user_disconnect_second = $("#user_disconnect_second").val() || 300;
+        if(user_disconnect_second > 600 || user_disconnect_second < 120){
+            showTipError('访客自动断开时间超出范围');
+            return;
+        }
+        var wel_word = $("#wel_word").val();
+        if(wel_word.length>50){
+            showTipError('欢迎辞过长');
+            return;
+        }
+        var data = {tab_host:tab_host,service_port:service_port,user_disconnect_second:user_disconnect_second,wel_word:wel_word};
+        $.ajax({
+            url:'{{$baseUrl}}/api/v1/settingServer',
+            type:'post',
+            data:data,
+            dataType:'json',
+            async:false,
+            success:function(res){
+                if(res.status == 200){
+                    showTipOk(res.msg);
+                }else{
+                    showTipError(res.msg);
+                }
+            },
+            error:function(){
+                showTipError('服务器异常,请重试');
+            }
+        })
+    });
+})
+
+</script>

@@ -3,175 +3,322 @@
 namespace app\api\controller;
 
 use app\api\controller\Base as Controller;
+use app\api\model\Admin;
 use app\api\model\Project;
 use app\api\model\Template;
 use app\api\model\ProjectData as ModelProjectData;
+use app\api\model\ProjectDataCheck;
+use app\api\model\ProjectDataCheckStat;
 use app\api\model\ProjectDataDetail;
+use app\api\model\ProjectFlow;
+use app\api\model\ProjectRoles;
 use app\api\model\TemplateField;
+use think\Cache;
 use think\Exception;
 
 class ProjectData extends Controller
 {
       /**
-     * 获取项目用户数据
+     * 获取用户项目数据
      */
     function index()
     {
         $page = (int) input('page', 1);
         $page = max(1, $page);
-        $pagesize = (int) input('pagesize', 15);
+        $pagesize = (int) input('pagesize', 30);
         $pagesize = max($pagesize, 1);
 
-        $searchId = (int)input('pid');
+        $list = [];
+        $data = ['list' => [], 'paginate' => ''];
+
+        $modelProject = new Project();
+        $where = ['steps'=>['>',0]];
+
+        $tpl = 'projectData/list';
+        $data['proList'] = '';
+        $baseUrl = Cache::get('baseUrl');
+        $list = $modelProject->where($where)->field('id,name,total,status,uuid')
+                    ->paginate(['list_rows' => $pagesize, 'page' => $page, 'path' => $baseUrl. '/api/v1/data']);
+        $paginate = $list->render();
+        $data['paginate'] = $paginate;
+        $data['isOwn'] = 0;
+        $data['list'] = $list ? $list->toArray() : [];
+        $data['page'] = $page;
+        $data['pagesize'] = $pagesize;
+
+        return $this->view->fetch($tpl, $data);
+    }
+
+    //查看具体项目数据
+    function viewPro($uuid){
+        $page = (int) input('page', 1);
+        $page = max(1, $page);
+        $pagesize = (int) input('pagesize', 30);
+        $pagesize = max($pagesize, 1);
+
+       
         
         $list = [];
         $data = ['list' => [], 'paginate' => ''];
 
 
-        $modelData= new ModelProjectData();        
-        $where= ['step'=>1];
-        if($searchId > 0){
-            $where['a.p_id'] = $searchId;
+        $modelProject = new Project();
+        
+        $modelData= new ModelProjectData();
+        $where= ['a.status'=>1];
+      
+        $p_id = 0;
+        $titles = [];
+        $filters = [];
+    
+        $pInfo = $modelProject->getProInfo($uuid);
+        $data['proInfo'] = $pInfo;
+        $p_id = $pInfo['id'];
+        $where['a.p_id'] = $p_id;
+    
+        $tempInfo = (new TemplateField())->where(['temp_id'=>['in',$pInfo['temps']]])->order('temp_id asc,sort asc')->select();
+        
+        foreach($tempInfo as $item ){
+            if($item['is_title']){
+                $titles[$item['id']] = $item->getData();
+            }
+            if($item['is_filter']){
+                $filters[$item['id']] = $item->getData();
+            }
         }
-        $total = $modelData->alias('a')->where($where)->count('a.id');
-        if($total > 0){
-            $list = $modelData->alias('a')->join('tab_project b','a.p_id = b.id')
-                            ->where($where)
-                            ->field('a.id,b.name,a.create_time')
-                            ->order('a.id desc')->paginate(['list_rows' => $pagesize, 'page' => $page, 'path' => '', 'fragment' => 'data']);
-            $paginate = $list->render();
-            $data['paginate'] = $paginate;
-        }
-       
-        $proList = $this->getUserProList();
-        $data['proList'] = $proList;
-
-        $data['searchId'] = $searchId;
-        $data['list'] = $list;
+        unset($tempInfo);
+        $baseUrl = Cache::get('baseUrl');
+        $detailModel = new ProjectDataDetail();
+        $list = $modelData->alias('a')
+                        ->join('tab_user_data_check c','c.p_id = a.p_id and c.data_id = a.id and c.step = 1','LEFT')
+                        ->join('tab_admin b','c.check_user = b.id','LEFT')
+                        ->where($where)
+                        ->field('a.id,a.p_id,cur_step,check_status,b.name,b.nickname,check_time,is_complete,from_code,a.create_time')
+                        ->order('sorts,id desc')
+                        ->paginate(['list_rows' => $pagesize, 'page' => $page, 'path' => $baseUrl.'/api/v1/data'])
+                        ->each(function(&$item,$key)use($detailModel,$titles){
+                            $where =['p_id'=>$item['p_id'],'data_id'=>$item['id']];
+                            if($item['cur_step']  == 1){
+                                $where['step'] = $item['cur_step'];
+                            }else{
+                                $where['step'] = ['<=',$item['cur_step']];
+                            }
+                            
+                            $tmps = $detailModel->where($where)->field('field_id,val,remark')->select();
+                            $item = $item->getData();
+                            $data = [];
+                            switch($item['check_status']){
+                                case 1:
+                                    $item['check'] = '通过';
+                                break;
+                                case 2:
+                                    $item['check'] = '驳回';
+                                break;
+                                default:
+                                    $item['check'] = '-';
+                            }
+                            if($tmps){
+                                foreach($tmps as $t){
+                                    if(isset($titles[$t['field_id']])){
+                                        $data[ $t['field_id'] ] = $t->getData();
+                                    }    
+                                }
+                            }
+                            $item['userData'] = $data;
+                            return $item;
+                        });
+        $paginate = $list->render();
+        $data['paginate'] = $paginate;
+        
+    
+        $data['titles'] = $titles;
+ 
+        $data['list'] = $list ? $list->toArray() : [];
         $data['page'] = $page;
-        $data['total'] = $total;
         $data['pagesize'] = $pagesize;
 
-        return $this->view->fetch('projectData/list', $data);
+        
+        return $this->view->fetch('projectData/prodata', $data);
     }
 
+    /**查看数据详情
+     * 1. 根据data_id拿到p_id后找出项目信息,流程信息,所有的模板信息
+     * 2. 只有当前步骤被驳回的情况下提交人可以编辑，否则无法编辑
+     * */
     function view($id){
-        $searchId = (int)input('pid');
-
+        if($id < 1){
+            return errorReturn('非法访问');
+        }
         $modelData = new ModelProjectData();
-        $info = $modelData->alias('a')->join('tab_template b','a.flow_id = b.id','LEFT')->where(['a.id'=>$id])->field('title,flow_id,b.name')->find();
+        $info = $modelData->where(['id'=>$id])->field('p_id,cur_step,is_complete')->find();
         
-        $temp_id = (int)$info['flow_id'];
+        $data = [];
+        
+        $p_id = $info['p_id'];
+        $proInfo = (new Project())->getProInfo($p_id,1);
+        $data['proInfo'] = $proInfo;
 
+        $tempInfo = (new Template())->where(['id'=>['in',$proInfo['temps']]])->field('id,name')->select();
+        $tempInfo = array_column($tempInfo->toArray(),null,'id');
+
+        $where = ['p_id'=>$p_id];
+        $flows = (new ProjectFlow())->where($where)->field('id,temps,step')->order('step')->select();
+        $tempInfos = [];
+        foreach($flows as $flow){
+            $t = explode(',',$flow['temps']);
+            foreach($t as $tid){
+                $tempInfos[$flow['step']][] = $tempInfo[$tid];
+            }
+        }
+        $checkInfo = (new ProjectDataCheck())->alias('a')->join('tab_admin b','a.check_user = b.id')->where(['p_id'=>$p_id,'data_id'=>$id])->field('step,b.name,b.nickname,check_status,check_time,a.remark')->select();
+        $data['checkInfo'] = array_column( ($checkInfo ? $checkInfo->toArray() : []),null,'step');
         $modelDetail = new ProjectDataDetail();
-        $fieldDatas = $modelDetail->where(['data_id'=>$id,'flow_id'=>$temp_id])->field('id,field_id,val')->select();
+        $fieldDatas = $modelDetail->where(['p_id'=>$p_id,'data_id'=>$id])->field('id,field_id,val,remark')->select();
         $fieldDatas = $fieldDatas ? $fieldDatas->toArray() : [];
         $fieldDatas = array_column($fieldDatas,null,'field_id');
         
         $modelField = new TemplateField();
-        $fields = $modelField->where(['temp_id'=> $temp_id])
-                            ->field('id,name,data_type as dataType')
-                            ->order('sort asc,id asc')
+        $fields = $modelField->where(['temp_id'=> ['in',$proInfo['temps']]])
+                            ->field('id,temp_id,name,data_type as dataType')
+                            ->order('temp_id,sort,id')
                             ->select();
         $fields = $fields ? $fields->toArray() : [];
-        foreach($fields as $key => $item){
+        $tempFields = [];
+        foreach($fields as $item){
             $fid = (int)$item['id'];
-            $fields[$key]['val'] = '';
-            $fields[$key]['detail_id'] = '';
+            $item['val'] = '';
+            $item['remark'] = '';
+            $item['detail_id'] = 0;
             if(isset($fieldDatas[$fid])){
-                $fields[$key]['val'] = $fieldDatas[$fid]['val'];
-                $fields[$key]['detail_id'] = (int)$fieldDatas[$fid]['id'];
+                $item['val'] = $fieldDatas[$fid]['val'];
+                $item['remark'] = $fieldDatas[$fid]['remark'];
+                $item['detail_id'] = $fieldDatas[$fid]['id'];
             }
+            $tempFields[$item['temp_id']][] = $item;
         }
-        $data= [];
-        $data['fields'] = $fields;
-        $data['info'] = $info;
-        $data['searchId'] = $searchId;
+        unset($fields);
+        $data['data_id'] = $id;
+        $data['tempInfos'] = $tempInfos;
+        $data['tempFields'] = $tempFields;
         return $this->view->fetch('projectData/view',$data);
 
     }
 
-    function add(){
-
-        $pid = (int)input('pid',0);
-        $data_id = (int)input('did',0);
+    //添加数据
+    function add($uuid){
+        
+        if(!$uuid){
+            return errorReturn('非法访问');
+        }
         $data = [];
-        $data['data_id'] = 0;
-        if($data_id > 0){
-            $modelData = new ModelProjectData();
-            $dataInfo = $modelData->where(['id'=>$data_id])->find();
-    
-            $data['dataInfo'] = [];
-            if($dataInfo){
-                $pid = $dataInfo['p_id'];
-                $data['dataInfo'] = $dataInfo;
+        $modelProject = new Project();
+        $pInfo = $modelProject->getProInfo($uuid);
+        $data['proInfo'] = $pInfo;
+        $p_id = $pInfo['id'];
+      
+        
+        $data['uuid'] = $uuid;
+        
+        $modelFlow = new ProjectFlow();
+        $flowInfo = $modelFlow->where(['p_id'=>$p_id])->field('temps,step,has_check')->order('step')->select();
+
+        $data['has_check'] = $pInfo['roles'] && $flowInfo[0]['has_check'] ? true : false;
+        $tempInfo = (new Template())->where(['id'=>['in',$pInfo['temps']]])->field('id,name')->select();
+        $tempInfo = array_column($tempInfo->toArray(),null,'id');
+
+        $temps = [];
+        foreach($flowInfo as $flow){
+            $t = explode(',',$flow['temps']);
+            foreach($t as $tid){
+                $temps[$flow['step']][] = $tempInfo[$tid];
             }
-            $modelDetail = new ProjectDataDetail();
-    
-            $where =['data_id'=>$data_id];
-            $detailInfo = $modelDetail->alias('a')->join('tab_template_field b','a.field_id = b.id')->field('a.val,a.remark,a.field_id,b.data_type As dataType')->where($where)->select();
-            $detailInfo = $detailInfo ? $detailInfo->toArray() :[];
-            $detailInfo = array_column($detailInfo,null,'field_id');
-            $data['detailInfo'] = $detailInfo;
-            $data['data_id'] = $data_id;
         }
-       
-        $data['field_require'] = [];
-        if($pid > 0 ){
-            $where = [];
-            $where['id'] = $pid;
-            $model = new Template();
-            $tempInfo = $model->where($where)->field('id,name')->find();
-            $data['tempInfo'] = $tempInfo;    
-            $modelField = new TemplateField();
-            $fields = $modelField->where(['temp_id'=> $pid])
-                                ->field('id,name,data_type as dataType,options,is_require')
-                                ->order('sort asc,id asc')
-                                ->select();
-            $data['fields'] = $fields;
-            $field_require = [];
-            foreach($fields as $v){
-                if(!$v['is_require']){
-                    continue;
-                }
-                $field_require[$v['id']] = [ 'dataType'=>$v['dataType'],'name'=>$v['name']];
+        unset($tempInfo);
+        $data['flowInfo'] = $temps;
+
+        $tempFields = (new TemplateField())->where(['temp_id'=>['in',$pInfo['temps']]])
+                            ->field('id,temp_id,name,data_type as dataType,options,is_require')
+                            ->order('temp_id,sort,id')->select();
+        $fields = [];
+        foreach($tempFields as $item){
+            if($item['is_require']){
+                $field_require[$item['id']] = [ 'dataType'=>$item['dataType'],'name'=>$item['name']];
             }
-            $data['fieldRequire'] = $field_require;
+            $fields[$item['temp_id']][] = $item->getData();
         }
-        $tempList= $this->getUserTempList();
-        $data['tempList'] = $tempList;
-        $data['pid'] = $pid;
-        $temp = $pid > 0 ? 'projectData/add' : 'projectData/select';
-        return $this->view->fetch($temp, $data);
+        $data['tempFields'] = $fields;
+        $field_require = [];
+        foreach($tempFields as $v){
+            if(!$v['is_require']){
+                continue;
+            }
+            $field_require[$v['id']] = [ 'dataType'=>$v['dataType'],'name'=>$v['name']];
+        }
+        $data['fieldRequire'] = $field_require;
+        
+        $data['auditUser'] =  [];
+        if($pInfo['admin_roles']){
+            $modelAdmin = new Admin();
+            $admins = $modelAdmin->alias('a')
+            ->join('tab_admin_role b','a.id = b.admin_id')
+            ->where(['b.role_id'=>['in',$pInfo['admin_roles'] ],'status'=>1 ])
+            ->field('a.id,a.name,a.nickname')
+            ->order('name')
+            ->select();
+            if($admins){
+                $data['auditUser'] = $admins->toArray();
+            }
+        }
+        
+
+        $tpl = 'projectData/add';
+        return $this->view->fetch($tpl, $data);
     }
     //用户数据保存
-    function save(){
-        $fieldData = input('field/a');
-        $title = input('title');
-        $pid = (int)input('pid');
-        $dataId = (int)input('did',0);
-        
-        if($pid < 1 || !$title){
-            return errorReturn('参数错误');
+    function save($uuid){
+        if(!$uuid){
+            return errorReturn('非法访问');
         }
-        $modelField = new TemplateField();
-        $fields = $modelField->where(['temp_id'=> $pid])
-                            ->field('id,name,data_type as dataType,options,is_require')
-                            ->order('sort asc,id asc')
+        $fieldData = input('field/a');
+        $check_user = (int)input('check_user',0);
+        $fromcode = input('code','0');
+        
+        $modelProject = new Project();
+        $pInfo = $modelProject->getProInfo($uuid);
+        $p_id = $pInfo['id'];
+        
+        $cur_step = 1;
+        
+        //获取流程信息，模板信息，验证数据有效
+        $modelFlow = new ProjectFlow();
+        $flowInfo = $modelFlow->where(['p_id'=>$p_id,'step'=>$cur_step])->field('temps,has_check')->find();
+        if($flowInfo['has_check'] && $check_user < 1){
+            return errorReturn('请选择审批人');
+        }
+
+        $tempFields = (new TemplateField())->where(['temp_id'=>['in',$flowInfo['temps']]])
+                            ->field('id,name,temp_id,data_type as dataType,options,is_require,is_sort')
                             ->select();
-        $fields = $fields ? $fields->toArray() : [];
+        $fields = array_column( $tempFields->toArray() ,null,'id');
 
         //检查各字段数据
         $error = '';
         $field_files = [];
+        $sortId = 0;
+      
         foreach($fields as $field){
             $field_id = $field['id'];
+            if($field['dataType'] == DT_FILE){ //上传文件字段单独判断
+                $field_files[$field_id] = $field;
+                continue;
+            }
+             //拿到排序字段
+             if($field['is_sort'] && $sortId < $field_id){
+                $sortId = $field_id;
+            }
             $r = $field['is_require'] ? true : false;
-            if(!isset($fieldData[$field_id])){
-                if($field['dataType'] == DT_FILE){ //上传文件字段单独判断
-                    $field_files[$field_id] = $field;
-                    continue;
-                }
+
+            if(!isset($fieldData[$field_id]) ){
                 if($r){
                     return errorReturn($field['name'].'不能为空');
                 }else{
@@ -179,54 +326,58 @@ class ProjectData extends Controller
                 }
             }
             $item = $fieldData[$field_id];
-            if( $r && !$item){
+            
+            if($item === '' || $item === null){
+                if(!$r){
+                    continue;
+                }
                 $error = $field['name'].'不能为空';
                 break;
             }
-            if($item){
-                switch($field['dataType']){
-                    case 'date':
-                        if( !preg_match('#^\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12][0-9]|3[01])$#',trim($item))){
-                            $error = $field['name'].'-日期格式错误';
-                        }
+            switch($field['dataType']){
+                case 'date':
+                    if($r && !preg_match('#^\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12][0-9]|3[01])$#',trim($item))){
+                        $error = $field['name'].'-日期格式错误';
+                    }
+                break;
+                case 'number':
+                    if(!preg_match('#^-?\d+$#',$item)){
+                        $error = $field['name'].'-数字格式错误';
+                    }
+                break;
+                case 'radio':case 'select':
+                    $vals = explode('|',$field['options']);
+                    if(!in_array($item,$vals)){
+                        $error = $field['name'].'-未知的选项值('.$item.')';
+                    }
                     break;
-                    case 'number':
-                        if(!preg_match('#^-?\d+$#',$item)){
-                            $error = $field['name'].'-数字格式错误';
+                case 'checkbox':
+                    $vals = explode('|',$field['options']);
+                    foreach($item as $v){
+                        if(!in_array($v,$vals)){
+                            $error = $field['name'].'-未知的选项值('.$v.')';
+                            break;
                         }
-                    break;
-                    case 'radio':case 'select':
-                        $vals = explode('|',$field['options']);
-                        if(!in_array($item,$vals)){
-                            $error = $field['name'].'-未知的选项值('.$item.')';
-                        }
-                        break;
-                    case 'checkbox':
-                        $vals = explode('|',$field['options']);
-                        foreach($item as $v){
-                            if(!in_array($v,$vals)){
-                                $error = $field['name'].'-选项值('.$v.')不存在';
-                                break;
-                            }
-                        }
-                        $fieldData[$field_id] = implode('|-|',$item);
-                    break;
-                }
+                    }
+                    $fieldData[$field_id] = implode('|-|',$item);
+                break;
             }
+            
         }
         if($error){
             return errorReturn($error);
         }
         $file = isset($_FILES['field']) ? $_FILES['field'] : '';
         
-        $uploadPath = UPLOAD_DIR.$this->getFileDir($pid);
+        $uploadPath = UPLOAD_DIR.$this->getFileDir($uuid);
         if(!file_exists($uploadPath)){
             mkdir($uploadPath,0755,true);
         }
         $error = '';
+        
         foreach($field_files as $fid => $field){
             if($field['is_require']){
-                if(!$dataId && (!$file || !isset($file['name'][$fid]) || !$file['name'][$fid] || $file['size'][$fid] < 1 ) ){
+                if(!$file || !isset($file['name'][$fid]) || $file['size'][$fid] < 1  ){
                     $error = $field['name'].'-文件不能为空';
                     break;
                 }
@@ -243,7 +394,7 @@ class ProjectData extends Controller
         
             $ext = pathinfo($origin_name,PATHINFO_EXTENSION);
 
-            $filename = $pid.'_'.$fid.$this->user_id.'_'.time().'.'.$ext;
+            $filename = $p_id.$fid.getUUid().'.'.$ext;
             
             if(move_uploaded_file($file['tmp_name'][$fid],$uploadPath.'/'.$filename) !== false){
                 $field_files[$fid]['saved_name'] = $filename;
@@ -255,63 +406,91 @@ class ProjectData extends Controller
         }
         $time = date('Y-m-d H:i:s');
         $modelData = new ModelProjectData();
-        $isEdit = $dataId ? 1 : 0;
-        if($dataId){
-            $modelData->where(['id'=>$dataId])->update(['title'=>$title,'update_time'=>$time]);
-        }else{
-            $dataId = $modelData->insertGetid(['flow_id'=>$pid,'user_id'=>$this->user_id,'title'=>$title,'create_time'=>$time,'update_time'=>$time]);
+        $user_id = $this->user_id ?: 0;
+        $sortData = '';
+        if($sortId && isset($fieldData[$sortId])){
+            $sortData = $fieldData[$sortId];
         }
+        $savedData = [
+        'p_id'=>$p_id,
+        'user_id'=>$user_id,
+        'cur_step'=> $cur_step,
+        'sorts' => $sortData,
+        'cur_day' => date('Y-m-d'),
+        'from_code' => $fromcode,
+        'is_complete'=> $flowInfo['has_check'] ? 0 : 1,
+        'create_time'=>$time,
+        'update_time'=>$time];
+        $dataId = $modelData->insertGetid($savedData);
        
-        if($dataId > 1){
-            $oldData = [];
+        if($dataId > 0){
+            
             $modelDetail = new ProjectDataDetail();
-            if($isEdit){
-                $oldData = $modelDetail->where(['data_id'=>$dataId])->field('field_id,val')->select();
-                $oldData = $oldData ? array_column($oldData->toArray(),null,'field_id') : [];
-            }
+            
             foreach($fieldData as $fid => $val){
-                if(!is_array($val) && !trim($val)){
+                if(!is_array($val) && ($val === '' || $val === null) ){
                     continue;
                 }
                 $tmp = [
-                    'flow_id' => $pid,
+                    'p_id' => $p_id,
                     'data_id' => $dataId,
+                    'user_id' => $user_id,
+                    'step' => $cur_step,
+                    'temp_id' => $fields[$fid]['temp_id'],
                     'field_id' => $fid,
                     'val' => $val
                 ];
-                if($isEdit){
-                    if(isset($oldData[$fid]) && $oldData[$fid]['val'] != $val){
-                        $modelDetail->where(['data_id'=>$dataId,'field_id'=>$fid])->update(['val'=>$val]);
-                    }
-                }else{
-                    $modelDetail->data($tmp)->isUpdate(false)->save();
-                }
+                $modelDetail->create($tmp);
             }
             foreach($field_files as $fid => $item){
                 $tmp = [
-                    'flow_id' => $pid,
+                    'p_id' => $p_id,
                     'data_id' => $dataId,
+                    'user_id' => $user_id,
+                    'step' => $cur_step,
                     'field_id' => $fid,
+                    'temp_id' => $fields[$fid]['temp_id'],
                     'val' => $item['origin_name'],
                     'remark' => $item['saved_name'],
                 ];
-                if($isEdit){
-                    $modelDetail->where(['data_id'=>$dataId,'field_id'=>$fid])->update(['val'=> $item['origin_name'],'remark' => $item['saved_name']]);
-                }else{
-                    $modelDetail->data($tmp)->isUpdate(false)->save();
-                }
+                $modelDetail->create($tmp);
+            }
+            $modelProject->where(['id'=>$p_id])->setInc('total');
+            if($flowInfo['has_check']){
+                $modelCheck = new ProjectDataCheck();
+                $modelCheck->create(['p_id'=>$p_id,'data_id'=>$dataId,'step'=>1,'user_id'=>$this->user_id,'check_user'=>$check_user]);
+                
+                ProjectDataCheckStat::incStat($p_id,$check_user);
             }
         }else{
             return errorReturn('保存失败,请重试');
         }
         return sucReturn('保存成功');
     }
-    //获取用户能用的模板列表
-    function getUserProList(){
-        //后期根据用户权限增加过滤
-        $where = ['status'=>1,'steps'=>['>',0]];
+    /** 
+     * 获取用户参与的项目列表
+     * 1. 所有人可参与的项目
+     * 2. 用户所属角色符合项目参与角色的
+     * 3. 需要用户审核的
+     */
+    function getUserProjectList(){
+        
+        $roles = $this->user_info['roles'];
+        $allowed = [];
+        $where = ['roles'=>0];
+        if($roles){
+            $model = new ProjectRoles();
+            $allowed= $model->where(['role_id'=>['in',$roles]])->distinct(true)->column('p_id');
+            if($allowed){
+                $where['id'] = ['in',$allowed];
+            }
+        }
         $model = new Project();
-        $proList= $model->where($where)->field('id,name')->select();
+        $model->where(['status'=>1,'steps'=>['>',0]]);
+        $model->where(function($query)use($where){
+            $query->whereOr($where);
+        });
+        $proList = $model->field('id,name,total,uuid')->select();
         return $proList ? $proList->toArray() : [];
     }
     function del(){
@@ -324,17 +503,7 @@ class ProjectData extends Controller
         return sucReturn('删除成功');
     }
 
-    function down($id){
-        $model = new ProjectDataDetail();
-        $info = $model->where(['id'=>$id])->field('flow_id,remark')->find();
-        if(!$info){
-            return "文件不存在";
-        }
-        $filename = UPLOAD_DIR.$this->getFileDir($info['flow_id']).$info['remark'];
-        downloadFile($filename);
-        
-    }
-    function getFileDir($flow_id){
-        return 'temp_'.$flow_id.'/';
+    function getFileDir($uuid){
+        return 'temp_'.$uuid.'/'.date('Ym').'/';
     }
 }

@@ -11,8 +11,4 @@ use think\Model;
 
 class Setting extends Model {
     protected $table = 'tab_setting';
-    function __construct($data = [])
-    {
-        parent::__construct($data);
-    }
 }

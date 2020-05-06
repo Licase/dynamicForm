@@ -3,9 +3,10 @@
 namespace app\api\controller;
 
 use app\api\controller\Base as Controller;
+use app\api\model\ProjectDataDetail;
 use app\api\model\Template as TemplateModel;
-use app\api\model\TemplateData;
 use app\api\model\TemplateField;
+use think\Cache;
 use think\Config;
 use think\Exception;
 
@@ -28,23 +29,17 @@ class Template extends Controller
         if ($name) {
             $where['name'] = ['like', "%{$name}%"];
         }
-        $total = $model->where($where)->count('id');
         $list = [];
         $data = ['list' => [], 'paginate' => ''];
-        if ($total > 0) {
-            if ($page > 1 && $total <= ($page - 1) * $pagesize) {
-                $page = ceil($total / $pagesize);
-            }
-            $list = $model->where($where)->order('id desc')->paginate(['list_rows' => $pagesize, 'page' => $page, 'path' => '/api/v1/template', 'fragment' => '']);
+        $baseUrl = Cache::get('baseUrl');
+        $list = $model->where($where)->order('id desc')->paginate(['list_rows' => $pagesize, 'page' => $page, 'path' => $baseUrl.'/api/v1/template', 'fragment' => '']);
 
-            $paginate = $list->render();
-            $data['paginate'] = $paginate;
-        }
-
-        $data['list'] = $list;
+        $paginate = $list->render();
+        $data['paginate'] = $paginate;
+    
+        $data['list'] = $list ? $list->toArray():[];
         $data['page'] = $page;
         $data['pagesize'] = $pagesize;
-        $data['total'] = $total;
         $data['name'] = $name;
 
         return $this->view->fetch('list', $data);
@@ -164,7 +159,10 @@ class Template extends Controller
     function del()
     {
         $id = input('id');
-        $modelData = new TemplateData();
+        if($id < 1){
+            return errorReturn('非法访问');
+        }
+        $modelData = new ProjectDataDetail();
         $t = $modelData->where(['temp_id'=>$id])->count('id');
         if($t > 0){
             return errorReturn('模板已被使用，无法删除');

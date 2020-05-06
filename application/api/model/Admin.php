@@ -11,9 +11,5 @@ use think\Model;
 
 class Admin extends Model {
     protected $table = 'tab_admin';
-    protected $update_time = false;
-    function __construct($data = [])
-    {
-        parent::__construct($data);
-    }
+
 }

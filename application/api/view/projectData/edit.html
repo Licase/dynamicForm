@@ -1,0 +1,269 @@
+<title>数据管理</title>
+<div class="page-header">
+    <h1> 数据管理 <small>
+        <i class="ace-icon fa fa-angle-double-right"></i> {{$proInfo.name}} <i class="ace-icon fa fa-angle-double-right"></i>  新增数据 </small>
+    </h1>
+</div>
+<div class="row">
+    <div class="col-xs-12">
+        <!-- PAGE CONTENT BEGINS -->
+        <div class="row">
+            <div class="col-xs-12">
+               
+                <form class="form-horizontal col-xs-9 widget-box " id="tp_data_add" onsubmit="return false" style="min-height: 300px;">
+                    <h3 class="lighter block green center"> {{$proInfo.name}} </h3>
+                    <div class="hr hr-dotted"></div>
+                    <div class="form-group">
+                        <label class="col-sm-3 control-label no-padding-right" for="title"><i style="color: red;">*</i> 标题：</label>
+                        <div class="col-sm-6">
+                            <input class="col-xs-9 form-control" type="text" name="title" id="tab_title" value="{{$dataInfo.title ? $dataInfo.title : ''}}" maxlength="64" /> 
+                        </div>
+                    </div>
+
+                    {{volist name="fields" id="field"}}
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label no-padding-right" for="field[{{$field.id}}]"> <?php if ($field['is_require'] && ( $data_id < 1 || $data_id && $field['dataType'] != DT_FILE )){ ?><i style="color: red;">*</i><?php }?> {{$field.name}}:</label>
+                                <?php 
+                                $old = null;
+                                if(isset($detailInfo[$field['id']])){
+                                    $old = $detailInfo[$field['id']];
+                                } ?>
+                                {{switch name="field.dataType"}}
+                                {{case value="{{DT_TEXT}}" break="1"}}
+                                <div class="col-sm-6">
+                                    <input class="col-xs-9 form-control" type="text" name="field[{{$field.id}}]" id="field_{{$field.id}}" value="{{$old ? $old.val : ''}}" maxlength="32" /> 
+                                {{/case}}
+                                {{case value="DT_NUMBER" break="1"}}
+                                <div class="col-sm-2">
+                                    <input class="col-xs-9 form-control" type="number" name="field[{{$field.id}}]" id="field_{{$field.id}}" value="{{$old ? $old.val : ''}}" maxlength="32" /> 
+                                {{/case}}
+                                {{case value="date" break="1"}}
+                                <div class="col-sm-3">
+                                    <div class="input-group">
+                                    <input id="field_{{$field.id}}" name="field[{{$field.id}}]" type="text"  value="{{$old ? $old.val : ''}}" class="form-control">
+                                    <span class="input-group-addon">
+                                        <i class="fa fa-clock-o bigger-110"></i>
+                                    </span>
+                                    <script>
+                                        $(function(){
+                                            $('#field_{{$field.id}}').datetimepicker({
+                                        format: 'YYYY-MM-DD',//use this option to display seconds
+                                        icons: {
+                                            time: 'fa fa-clock-o',
+                                            date: 'fa fa-calendar',
+                                            up: 'fa fa-chevron-up',
+                                            down: 'fa fa-chevron-down',
+                                            previous: 'fa fa-chevron-left',
+                                            next: 'fa fa-chevron-right',
+                                            today: 'fa fa-arrows ',
+                                            clear: 'fa fa-trash',
+                                            close: 'fa fa-times'
+                                        }
+                                        }).next().on(ace.click_event, function(){
+                                            $(this).prev().focus();
+                                        });
+                                        });
+                                    </script>
+                                    </div>
+                                {{/case}}
+                                {{case value="radio" break="1"}}
+                                <div class="col-sm-6">
+                                <div class="radio">
+                                <?php
+                                    if($field['options']){
+                                        $vals = explode('|',$field['options']);
+                                        $oldVars = [];
+                                        if($old){
+                                            $oldVars = explode('|-|',$old['val']);
+                                        }
+                                        $f= true;
+                                        foreach($vals as $v){
+                                            $v = trim($v);
+                                            if(!$v){
+                                                continue;
+                                            }
+                                            if(in_array($v,$oldVars)){
+                                                $f = true;
+                                            }
+                                            echo '<label>
+                                                    <input name="field['.$field['id'].']" '.($f ? 'checked' : '').' type="radio" value="'.$v.'" class="ace">
+                                                    <span class="lbl">'.$v.'</span>
+                                                </label>';
+                                            $f = false;
+                                        }
+                                    }
+                                ?>
+                                </div>
+                                {{/case}}
+                                {{case value="checkbox" break="1"}}
+                                <div class="col-sm-6">
+                                <div class="checkbox">
+                                    <?php
+                                        if($field['options']){
+                                            $vals = explode('|',$field['options']);
+                                            $oldVars = [];
+                                            if($old){
+                                                $oldVars = explode('|-|',$old['val']);
+                                            }
+                                            
+                                            foreach($vals as $v){
+                                                $f= false;
+                                                $v = trim($v);
+                                                if(!$v){
+                                                    continue;
+                                                }
+                                                if(in_array($v,$oldVars)){
+                                                    $f = true;
+                                                }
+                                                echo '<label>
+                                                        <input name="field['.$field['id'].'][]" '.($f ? 'checked' : '').' type="checkbox" value="'.$v.'" class="ace">
+                                                        <span class="lbl">'.$v.'</span>
+                                                    </label>';
+                                            }
+                                        }
+                                    ?>
+                                    </div>
+                                {{/case}}
+                                {{case value="select" break="1"}}
+                                <div class="col-sm-4">
+                                <select class="form-control" name="field[{{$field.id}}]" id="field_{{$field.id}}">
+                                    <option value="">请选择</option>
+                                <?php
+                                    if($field['options']){
+                                        $vals = explode('|',$field['options']);
+                                        foreach($vals as $v){
+                                            if(!trim($v)){
+                                                continue;
+                                            }
+                                            echo '<option '.($old && $old['val'] == $v ? 'selected' : '').' value="'.$v.'">'.$v.'</option>';
+                                        }
+                                    }
+                                ?>
+                                </select>
+                                {{/case}}
+                                {{case value="file" break="1"}}
+                                 <div class="col-sm-4">
+                                    <span>{{$old.val}}</span>
+                                    <input class="form-control" type="file" name="field[{{$field.id}}]" value="{{$old && $old.val ? $old.val : ''}}" id="field_{{$field.id}}" /> 
+                                {{/case}}
+                                
+                                {{case value="file" break="1"}}
+                                 <div class="col-sm-4">
+                                    <span>{{$old.val}}</span>
+                                    <input class="form-control" type="file" name="field[{{$field.id}}]" value="{{$old && $old.val ? $old.val : ''}}" id="field_{{$field.id}}" /> 
+                                {{/case}}
+
+                                {{/switch}}
+                                
+                            </div>
+                        </div>
+                        <div class="space-4"></div>
+                    {{/volist}}
+                    <div class="hr hr-dotted"></div>
+
+                    <div class="form-group center">
+                    <button class="btn" onclick="window.location.href='/api/v1/data'">
+                        <i class="ace-icon fa fa-undo bigger-110"></i> 返回 </button>
+                        &nbsp;
+                    <button class="btn btn-info" id="data_submit">
+                        <i class="ace-icon fa glyphicon glyphicon-plus bigger-120"></i> 提交 </button>
+                    </div>
+                </form>
+               
+                
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+   
+    $(function () {
+        <?php
+            $rules = [
+                'title' => ['required'=> true]
+            ];
+            $msg = [
+                'title'=>'名称不能为空',
+            ];
+            if($fieldRequire){
+                foreach($fieldRequire as $fid => $item){
+                    if($data_id > 0 && $item['dataType'] == DT_FILE){
+                        continue;
+                    }
+                    $key = $item['dataType'] == DT_CHECKBOX ? 'field['.$fid.'][]' : 'field['.$fid.']';
+                    $rules[$key] = ['required'=> true];
+                    $msg[$key] = $item['name'] .'不能为空';
+                }
+            }
+        ?>
+        $('#tp_data_add').validate({
+            errorElement: 'div',
+            errorClass: 'help-block',
+            focusInvalid: false,
+            ignore: "",
+            rules: <?php echo json_encode($rules) ?>,
+            messages:  <?php echo json_encode($msg) ?>,
+            highlight: function (e) {
+                $(e).closest('.form-group').addClass('has-error');
+            },
+            success: function (e) {
+                $(e).closest('.form-group').removeClass('has-error');//.addClass('has-info');
+                $(e).remove();
+            },
+            errorPlacement: function (error, element) {
+                if (element.is('input[type=checkbox]') || element.is('input[type=radio]')) {
+                    var controls = element.closest('div[class*="col-"]');
+                    if (controls.find(':checkbox,:radio').length > 1) controls.append(error);
+                    else error.insertAfter(element.nextAll('.lbl:eq(0)').eq(0));
+                }
+                else if (element.is('.select2')) {  
+                    error.insertAfter(element.siblings('[class*="select2-container"]:eq(0)'));
+                }
+                else if (element.is('.chosen-select')) {
+                    error.insertAfter(element.siblings('[class*="chosen-container"]:eq(0)'));
+                }
+                else error.insertAfter(element);
+            }
+        });
+       
+        //添加
+        var flag = true;
+        var data_id = {{$data_id}};
+        $('#data_submit').click(function () {
+            if (!$('#tp_data_add').valid()) {
+                return false;
+            }
+            if(!flag){
+                return ;
+            }
+            $flag = false;
+            var data = new FormData(document.getElementById('tp_data_add'));
+            
+            data.append("tid",<?=$tid?>);
+            data.append('did',data_id);
+            
+            $.ajax({
+                url:'{{$baseUrl}}/api/v1/data/add',
+                data:data,
+                type:'POST',
+                dataType: 'json',
+                async: false,
+                processData: false,
+                cache: false,
+                contentType: false,
+                success: function (res) {
+                    checkLoginExpire(res);
+                    if (res.status == 200) {
+                        showTipOk(res.msg)
+                        window.location.href='{{$baseUrl}}/api/v1/data';
+                    } else {
+                        showTipError(res.msg)
+                    }
+                    return;
+                }
+            });
+        })
+      
+    }());
+</script>

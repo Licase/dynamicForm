@@ -6,8 +6,10 @@ define('DT_CHECKBOX','checkbox');
 define('DT_SELECT','select');
 define('DT_DATE','date');
 define('DT_FILE','file');
+define('DT_TEXTAREA','textarea');
 return array(
     DT_TEXT => '文本',
+    DT_TEXTAREA =>'文本域',
     DT_NUMBER => '数字', 
     DT_RADIO => '单选', 
     DT_CHECKBOX => '复选', 

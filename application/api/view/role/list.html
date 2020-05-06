@@ -41,7 +41,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {{volist name="list" id="item" }}
+                        {{volist name="list.data" id="item" }}
                         <tr>
                             <td class="center">
                                 <label class="pos-rel">
@@ -72,7 +72,7 @@
                 </table>
                 <div class="col-xs-2">
                     <div class="dataTables_info" id="dynamic-table_info" role="status" aria-live="polite">
-                        {{$pagesize}}条/页,共{{$total}}条
+                        {{$pagesize}}条/页,共{{$list.total}}条
                     </div>
                 </div>
 
@@ -89,7 +89,7 @@
 
 <!-- 新增弹出框-->
 <div id="role_add_modal" class="modal fade">
-    <div class="modal-dialog" style="position: relative;top:40%;transform: translateY(-50%);min-width: 1024px;">
+    <div class="modal-dialog" style="position: relative;min-width: 1024px;">
         <div class="modal-content">
             <div class="modal-header no-padding">
                 <div class="table-header">
@@ -102,11 +102,18 @@
             <div class="modal-body">
                 <form class="form-horizontal" id="form_role" role="form">
                     <div class="form-group">
-                        <label class="col-sm-3 control-label no-padding-right" for="name">名称：</label>
+                        <label class="col-sm-3 control-label no-padding-right" for="name"><i style="color: red;">*</i>名称：</label>
 
                         <div class="col-sm-9">
                             <input type="text" id="name" name="name" placeholder="角色名称" maxlength="32"
                                 class="col-xs-10">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-3 control-label no-padding-right" for="remark"><i style="color: red;">*</i>权限：</label>
+                        <div class="col-sm-9">
+                          <input type="checkbox" style="margin-left:30px;" id="check_all" onclick="checkAll()">全选
+                           <ul id="menu_tree" class="tree tree-unselectable" role="tree"></ul>
                         </div>
                     </div>
                     <div class="form-group">
@@ -138,7 +145,7 @@
 
 <!-- 编辑弹出框-->
 <div id="role_edit_modal" class="modal fade">
-    <div class="modal-dialog" style="position: relative;top:40%;transform: translateY(-50%);min-width: 1024px;">
+    <div class="modal-dialog" style="min-width: 1024px;">
         <div class="modal-content">
             <div class="modal-header no-padding">
                 <div class="table-header">
@@ -151,11 +158,18 @@
             <div class="modal-body">
                 <form class="form-horizontal" id="form_role_edit" role="form">
                     <div class="form-group">
-                        <label class="col-sm-3 control-label no-padding-right" for="name">名称：</label>
+                        <label class="col-sm-3 control-label no-padding-right" for="name"><i style="color: red;">*</i>名称：</label>
 
                         <div class="col-sm-9">
                             <input type="text" id="edit_name" name="name" placeholder="角色名称" maxlength="32"
                                 class="col-xs-10">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-3 control-label no-padding-right" for="remark"><i style="color: red;">*</i>权限：</label>
+                        <div class="col-sm-9">
+                          <input type="checkbox" style="margin-left:30px;" id="edit_check_all" onclick="checkAll()">全选
+                           <ul id="edit_menu_tree" class="tree tree-unselectable" role="tree"></ul>
                         </div>
                     </div>
                     <div class="form-group">
@@ -187,17 +201,38 @@
 
 <script>
     var edit_id = 0;
-
+    var pre = '';
+    var treeOption = {
+        data: {{$permsAll}},
+        levels:2,
+        showBorder:false,
+        highlightSelected:false,
+        selectable:false,
+        multiSelect:true,
+        showCheckbox:true,
+        onNodeChecked:function(et,node){
+            if(node.type == 'button'){
+              var parent = $('#'+pre+'menu_tree').treeview('getParent', node);
+              $('#'+pre+'menu_tree').treeview('checkNode', parent.nodeId);
+            }
+        }
+    };
     function editRole(id) {
+        pre = 'edit_';
         $.ajax({
-            url: '/api/v1/role/' + id,
+            url: '{{$baseUrl}}/api/v1/role/' + id,
             dataType: 'json',
             async: false,
             success: function (res) {
+                checkLoginExpire(res);
                 if (res.status == 200) {
                     $('#edit_name').val(res.data.name);
                     $('#edit_remark').val(res.data.remark);
                     edit_id = id;
+                    $('#edit_menu_tree').html('');
+                    var tmpOption = treeOption;
+                    tmpOption.data = res.data.permsAll || {};
+                    $('#edit_menu_tree').treeview(tmpOption);
                     $('#role_edit_modal').modal('show');
                 } else {
                     showTipError(res.msg)
@@ -205,7 +240,11 @@
             },
         });
     }
-
+    function checkAll(){
+        var flag = $('#'+pre+'check_all').is(":checked") ? true : false;
+        var act = flag ? 'checkAll' : 'uncheckAll';
+        $('#'+pre+'menu_tree').treeview(  act ,{silent:true});
+    }
     function delRole(id, name,status) {
         if (parseInt(id) < 1) {
             showTipError('参数错误');
@@ -228,10 +267,11 @@
                 if (!res) {
                     return true;
                 }
-                $('.page-content').ace_ajax('post', '/api/v1/role', { id: id }, false, {
+                $('.page-content').ace_ajax('post', '{{$baseUrl}}/api/v1/role', { id: id }, false, {
                     dataType: 'json',
                     method: 'DELETE',
                     success: function (res) {
+                        checkLoginExpire(res);
                         if (res.status == 200) {
                             showTipOk(res.msg)
                             window.location.reload();
@@ -244,7 +284,10 @@
         })
     }
     $(function () {
+        $('#menu_tree').treeview(treeOption);
         $('#role_add').click(function () {
+            pre = '';
+            $('#menu_tree').treeview('uncheckAll', { silent: true });
             $('#role_add_modal').modal('show');
         });
         $('#form_role').validate({
@@ -326,10 +369,22 @@
             if (!$('#form_role').valid()) {
                 return false;
             }
-            var data = { name: $('#name').val(), 'remark': $('#remark').val() };
+            var perms = $('#menu_tree').treeview('getChecked');
+            var selected = [];
+            if(perms.length>0){
+                for(var i = 0;i<perms.length;i++){
+                    selected.push(perms[i].id);
+                }
+            }
+            if(!selected){
+                showTipError('请选择权限');
+                return;
+            }
+            var data = { name: $('#name').val(),perms:selected, 'remark': $('#remark').val() };
             $('#role_add_modal').ace_ajax('post', '/api/v1/role', data, false, {
                 dataType: 'json',
                 success: function (res) {
+                    checkLoginExpire(res);
                     if (res.status == 200) {
                         showTipOk(res.msg)
                         window.location.reload();
@@ -343,11 +398,23 @@
             if (!$('#form_role_edit').valid()) {
                 return false;
             }
-            var data = { name: $('#edit_name').val(), remark: $('#edit_remark').val() };
-            $('#role_edit_modal').ace_ajax('post', '/api/v1/role/' + edit_id, data, false, {
+            var perms = $('#edit_menu_tree').treeview('getChecked');
+            var selected = [];
+            if(perms.length>0){
+                for(var i = 0;i<perms.length;i++){
+                    selected.push(perms[i].id);
+                }
+            }
+            if(!selected){
+                showTipError('请选择权限');
+                return;
+            }
+            var data = { name: $('#edit_name').val(),perms:selected, remark: $('#edit_remark').val() };
+            $('#role_edit_modal').ace_ajax('post', '{{$baseUrl}}/api/v1/role/' + edit_id, data, false, {
                 dataType: 'json',
                 method: 'PUT',
                 success: function (res) {
+                    checkLoginExpire(res);
                     if (res.status == 200) {
                         showTipOk(res.msg)
                         window.location.reload();

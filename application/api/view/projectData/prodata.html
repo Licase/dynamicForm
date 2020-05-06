@@ -1,0 +1,184 @@
+<title>数据管理</title>
+
+<div class="page-header">
+    <h1>
+        项目管理
+        <small>
+            <i class="ace-icon fa fa-angle-double-right"></i>
+            数据管理
+            <i class="ace-icon fa fa-angle-double-right"></i>
+            {{$proInfo.name}}
+        </small>
+    </h1>
+</div>
+
+<div class="row">
+    <div class="col-xs-12">
+        <!-- PAGE CONTENT BEGINS -->
+
+        <div class="row">
+            <div class="col-xs-12">
+                <div class="col-xs-2">
+                    <button class="btn btn-cancel" id="data_return">
+                        <i class="ace-icon fa glyphicon glyphicon-plus bigger-120"></i>
+                        返回
+                    </button>
+                
+                <button class="btn btn-info" id="data_add">
+                    <i class="ace-icon fa glyphicon glyphicon-plus bigger-120"></i>
+                    新增
+                </button>
+             
+                </div>
+                
+                <div class="col-xs-12 hr hr-dotted"></div>
+             
+                <table id="simple-table" class="table table-bordered table-hover" style="table-layout: fixed;">
+                    <thead>
+                        <tr>
+                            <th class="center col-xs-1">
+                                <label class="pos-rel">
+                                    <input type="checkbox" class="ace">
+                                    <span class="lbl"></span>
+                                </label>
+                            </th>
+                            <th class="col-xs-1 center">序号</th>
+                            {{volist name="titles" id="title"}}
+                                <th class="center">{{$title.name}}</th>
+                            {{/volist}}
+                            <th class="col-xs-1 center">审核状态</th>
+                            <th class="col-xs-1 center">审核人</th>
+                            <th class="col-xs-1 center">审核时间</th>
+                            <th class="col-xs-1 center">是否完成</th>
+                            <th class="col-xs-1 center">提交时间</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{volist name="list.data" id="item" }}
+                        <tr>
+                            <td class="center">
+                                <label class="pos-rel">
+                                    <input type="checkbox" value="{{$item.id}}" class="ace">
+                                    <span class="lbl"></span>
+                                </label>
+                            </td>
+                            <td class="center">
+                                <?php
+                                 echo $key + ($pagesize * ($page-1))+1 ;
+                                 ?>
+                            </td>
+                            
+                            <?php 
+                                foreach($titles as $id => $title){
+                                    $html='<td class="center">';
+                                    if(isset($item['userData'][$id])){
+                                        switch($title['data_type']){
+                                            case DT_FILE:
+                                            $html .= '<span>'.$item['userData'][$id]['val'].'</span>';
+                                            break;
+                                            default:
+                                            $html .= '<span>'.$item['userData'][$id]['val'].'</span>';
+                                        }
+                                    }
+                                    $html .= '</td>';
+                                    echo $html;
+                                }
+                            ?>
+                            </td>
+                            <td class="center">{{$item['check']}}</td>
+                            <td class="center">{{$item['nickname'] ? : $item['name']}}</td>
+                            <td class="center">{{$item['check_time'] ?: '-'}}</td>
+                            <td class="center">{{$item['is_complete'] ? '已结束': '否'}}</td>
+                            <td class="center">{{$item['create_time'] }}</td>
+                            <td>
+                                <button class="btn btn-info btn-xs" title="查看" onclick="viewData({{$item.id}})">查看</button>
+                                <button class="btn btn-danger btn-xs" title="删除" onclick="delData({{$item.id}})">删除</button>
+                            </td>
+                        </tr>
+                        {{/volist}} </tbody>
+                </table>
+                <div class="col-xs-2">
+                    <div class="dataTables_info" id="dynamic-table_info" role="status" aria-live="polite">
+                        {{$pagesize}}条/页,共{{$list.total}}条
+                    </div>
+                </div>
+
+                <div class="col-xs-6 pull-right">
+                    <div class="dataTables_paginate paging_simple_numbers" id="table_paginate">
+                        {{$paginate}}
+
+                    </div>
+                </div>
+             
+            </div> <!-- /.span -->
+        </div>
+    </div>
+</div>
+
+
+<script>
+    function viewData(dataid){
+        var id = parseInt(dataid);
+        var isOwn = {{$isOwn ? $isOwn : 0}};
+        if(isOwn == 1){
+            m = 'mydata';
+        }else if(isOwn == 2){
+            m = 'mycheck';
+        }else{
+            m = 'data';
+        }
+        window.location.href = '{{$baseUrl}}/api/v1/'+m+'/view/'+dataid;
+    }
+
+    function delData(id, name) {
+        if (parseInt(id) < 1) {
+            showTipError('参数错误');
+            return false;
+        }
+        bootbox.confirm({
+            message: '确认删除(' + name + ')?',
+            buttons: {
+                confirm: {
+                    label: "确认",
+                    className: "btn-primary btn-sm",
+                },
+                cancel: {
+                    label: "取消",
+                    className: "btn-sm",
+                }
+            },
+            callback: function (res) {
+                if (!res) {
+                    return true;
+                }
+                $('#simple-table').ace_ajax('post', '{{$baseUrl}}/api/v1/data', { did: id }, false, {
+                    dataType: 'json',
+                    method: 'DELETE',
+                    success: function (res) {
+                        checkLoginExpire(res);
+                        if (res.status == 200) {
+                            showTipOk(res.msg)
+                            window.location.reload();
+                        } else {
+                            showTipError(res.msg)
+                        }
+                    },
+                })
+            }
+        })
+    }
+    $(function () {
+        $('#data_add').click(function () {
+            var status = {{$proInfo.status}};
+            if(status < 1){
+                showTipOk('项目已隐藏,无法新增');
+                return;
+            }
+             window.location.href="{{$baseUrl}}/api/v1/data/add/{{$proInfo.uuid}}";
+        })
+        $('#data_return').click(function () {
+             window.history.go(-1);
+        })
+    });
+</script>

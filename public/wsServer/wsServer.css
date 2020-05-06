@@ -141,10 +141,14 @@ html,body{
     text-align:left;
     padding: 0.01rem 0.1rem;
     width: auto;
+    height:0.3rem;
+    line-height:0.3rem;
+    
+
     max-width: 90%;
     word-wrap:break-word;
     font-size: 0.12rem;
-    background-color: #eee;
+    background-color: rgb(151, 213, 247);
     border-radius: 4px;
     margin-right: 0.12rem;
 }
@@ -154,9 +158,12 @@ html,body{
     padding: 0.01rem 0.1rem;
     width: auto;
     max-width: 90%;
+    height:0.3rem;
+    line-height:0.3rem;
+    vertical-align: center;
     word-wrap:break-word;
     font-size: 0.12rem;
-    background-color: #eee;
+    background-color: #ddd;
     border-radius: 4px;
     margin-left: 0.12rem;
 }
@@ -229,4 +236,27 @@ html,body{
     font-size: 0.13rem;
     color:green;
     float: left;
+}
+
+#info_box{
+    margin-top: 50px;
+    font-size: 0.2rem;
+    text-align: center;
+    line-height: 0.4rem;
+}
+#info_box table{
+    margin: 0 auto;
+}
+#info_box table input[type="text"]{
+    width: 200px;
+    height: 30px;
+    padding-left:10px;
+    border: 1px solid #000;
+}
+.ask_btn{
+    width: 100px;
+    height: 30px;
+    font-size: 0.2rem;
+    cursor: pointer;
+    background-color: #87B87F;
 }

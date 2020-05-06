@@ -46,7 +46,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {{volist name="list" id="item" }}
+                        {{volist name="list.data" id="item" }}
                         <tr>
                             <td class="center">
                                 <label class="pos-rel">
@@ -55,7 +55,8 @@
                                 </label>
                             </td>
                             <td class="center">
-                                <?php echo $key + ($pagesize * ($page-1))+1 ?>
+                                <?php 
+                                echo $key + ($pagesize * ($page-1))+1; ?>
                             </td>
                             <td class="center">
                                 {{$item.name}}
@@ -89,7 +90,7 @@
                 </table>
                 <div class="col-xs-2">
                     <div class="dataTables_info" id="dynamic-table_info" role="status" aria-live="polite">
-                        {{$pagesize}}条/页,共{{$total}}条
+                        {{$pagesize}}条/页,共{{$list.total}}条
                     </div>
                 </div>
 
@@ -157,6 +158,9 @@
                                         <input name="roles[]" type="checkbox" value="{{$role.id}}" class="ace">
                                         <span class="lbl">{{$role.name}}</span>
                                     </label>
+                                    {{if condition="$key++ && $key%4 == 0"}}
+                                        <br/>
+                                    {{/if}}
                                 {{/volist}}
                             </div>
                         </div>
@@ -253,6 +257,9 @@
                                     <input name="edit_roles[]" id="edit_role_{{$role.id}}" type="checkbox" value="{{$role.id}}" class="ace">
                                     <span class="lbl">{{$role.name}}</span>
                                 </label>
+                                {{if condition="$key++ && $key%4 == 0"}}
+                                <br/>
+                            {{/if}}
                             {{/volist}}
                             </div>
                         </div>
@@ -301,10 +308,11 @@
     
     function editAdmin(uuid) {
         $.ajax({
-            url: '/api/v1/admin/' + uuid,
+            url: '{{$baseUrl}}/api/v1/admin/' + uuid,
             dataType: 'json',
             async: false,
             success: function (res) {
+                checkLoginExpire(res);
                 if (res.status == 200) {
                     $('#edit_account').html(res.data.account);
                     $('#edit_name').val(res.data.name);
@@ -348,10 +356,11 @@
                 if (!res) {
                     return true;
                 }
-                $('.page-content').ace_ajax('post', '/api/v1/admin', { uuid: uuid }, false, {
+                $('.page-content').ace_ajax('post', '{{$baseUrl}}/api/v1/admin', { uuid: uuid }, false, {
                     dataType: 'json',
                     method: 'DELETE',
                     success: function (res) {
+                        checkLoginExpire(res);
                         if (res.status == 200) {
                             showTipOk(res.msg)
                             window.location.reload();
@@ -532,6 +541,7 @@
             $('#admin_add_modal').ace_ajax('post', '/api/v1/admin', data, false, {
                 dataType: 'json',
                 success: function (res) {
+                    checkLoginExpire(res);
                     if (res.status == 200) {
                         showTipOk(res.msg)
                         window.location.reload();
@@ -560,10 +570,11 @@
                 roles:roles,
                 remark: $('#edit_remark').val()  
             };
-            $('#admin_edit_modal').ace_ajax('post', '/api/v1/admin/' + edit_id, data, false, {
+            $('#admin_edit_modal').ace_ajax('post', '{{$baseUrl}}/api/v1/admin/' + edit_id, data, false, {
                 dataType: 'json',
                 method: 'PUT',
                 success: function (res) {
+                    checkLoginExpire(res);
                     if (res.status == 200) {
                         showTipOk(res.msg)
                         window.location.reload();

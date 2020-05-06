@@ -41,7 +41,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {{volist name="list" id="item" }}
+                        {{volist name="list.data" id="item" }}
                         <tr>
                             <td class="center">
                                 <label class="pos-rel">
@@ -69,14 +69,13 @@
                             
                                 <button class="btn btn-success btn-xs" title="设计模板" onclick="toDesign({{$item.id}})">设计</button>
                                 <button class="btn btn-danger btn-xs" title="删除" onclick="delTemplate({{$item.id}},'{{$item.name}}')">删除</button>
-                                <button class="btn btn-yellow btn-xs" title="分享" >分享提交地址</button>
                             </td>
                         </tr>
                         {{/volist}} </tbody>
                 </table>
                 <div class="col-xs-2">
                     <div class="dataTables_info" id="dynamic-table_info" role="status" aria-live="polite">
-                        {{$pagesize}}条/页,共{{$total}}条
+                        {{$pagesize}}条/页,共{{$list.total}}条
                     </div>
                 </div>
 
@@ -192,14 +191,15 @@
 
 <script>
     function toDesign(id) {
-        window.location.href = "/api/v1/template/design/" + id;
+        window.location.href = "{{$baseUrl}}/api/v1/template/design/" + id;
     }
     function editTemplate(id) {
         $.ajax({
-            url: '/api/v1/template/' + id,
+            url: '{{$baseUrl}}/api/v1/template/' + id,
             dataType: 'json',
             async: false,
             success: function (res) {
+                checkLoginExpire(res);
                 if (res.status == 200) {
                     $('#edit_name').val(res.data.name);
                     $('#edit_remark').val(res.data.remark);
@@ -232,10 +232,11 @@
                 if (!res) {
                     return true;
                 }
-                $('#template_add_modal').ace_ajax('post', '/api/v1/template', { id: id }, false, {
+                $('#template_add_modal').ace_ajax('post', '{{$baseUrl}}/api/v1/template', { id: id }, false, {
                     dataType: 'json',
                     method: 'DELETE',
                     success: function (res) {
+                        checkLoginExpire(res);
                         if (res.status == 200) {
                             showTipOk(res.msg)
                             window.location.reload();
@@ -331,9 +332,10 @@
                 return false;
             }
             var data = { name: $('#name').val(), 'remark': $('#remark').val() };
-            $('#template_add_modal').ace_ajax('post', '/api/v1/template', data, false, {
+            $('#template_add_modal').ace_ajax('post', '{{$baseUrl}}/api/v1/template', data, false, {
                 dataType: 'json',
                 success: function (res) {
+                    checkLoginExpire(res);
                     if (res.status == 200) {
                         $('#template_add_modal').modal('hide');
                         $('.modal-backdrop').remove();
@@ -350,10 +352,11 @@
                 return false;
             }
             var data = { name: $('#edit_name').val(), remark: $('#edit_remark').val() };
-            $('#template_edit_modal').ace_ajax('post', '/api/v1/template/' + $('#edit_id').val(), data, false, {
+            $('#template_edit_modal').ace_ajax('post', '{{$baseUrl}}/api/v1/template/' + $('#edit_id').val(), data, false, {
                 dataType: 'json',
                 method: 'PUT',
                 success: function (res) {
+                    checkLoginExpire(res);
                     if (res.status == 200) {
                         $('#template_edit_modal').modal('hide');
                         $('.modal-backdrop').remove();

@@ -20,7 +20,7 @@ return [
     // 应用Trace
     'app_trace'              => false,
     // 应用模式状态
-    'app_status'             => 'local',
+    'app_status'             => '',
     // 是否支持多模块
     'app_multi_module'       => true,
     // 入口自动绑定模块
@@ -139,7 +139,7 @@ return [
         'taglib_end'   => '}}',
         'layout_on' => true,
         'layout_name' => 'layout',
-        'tpl_cache' => false,
+        'tpl_cache' => true,
     ],
 
     // 视图输出字符串内容替换

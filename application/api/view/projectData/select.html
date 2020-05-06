@@ -35,7 +35,7 @@
 <script>
      function searchTemp(tid){
         var id = parseInt(tid);
-        window.location.href = '/api/v1/data/add?tid='+tid;
+        window.location.href = '{{$baseUrl}}/api/v1/data/add?tid='+tid;
     }
 
     $(function () {

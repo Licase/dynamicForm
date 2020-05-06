@@ -11,9 +11,5 @@ use think\Model;
 
 class ProjectFlow extends Model {
     protected $table = 'tab_project_flow';
-    protected $update_time = false;
-    function __construct($data = [])
-    {
-        parent::__construct($data);
-    }
+
 }

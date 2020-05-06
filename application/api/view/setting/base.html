@@ -1,0 +1,62 @@
+
+<div class="page-header">
+    <h1>
+        系统设置
+        <small>
+            <i class="ace-icon fa fa-angle-double-right"></i>
+            基本设置
+        </small>
+    </h1>
+</div>
+<div class="col-xs-6">
+    <!-- PAGE CONTENT BEGINS -->
+    <button class="btn btn-info" id="save_btn">保存 </button>
+    
+    
+    <div class="hr hr-dotted"></div>
+
+    <form class="form-horizontal" id="form_field_edit" role="form">
+        <div class="form-group">
+            <label class="col-sm-3 control-label no-padding-right" for="name">系统名称：</label>
+            <div class="col-sm-9">
+
+                <input type="text" id="{{$Think.SYS_TITLE}}" maxlength="20" value="{{$sys_title ?: '项目管理系统'}}" class="col-xs-10">
+            </div>
+        </div>
+        <!-- <div class="form-group">
+            <label class="col-sm-3 control-label no-padding-right" for="name">数据类型：</label>
+            <div class="col-sm-9">
+                <select id="edit_dataType" name="edit_dataType">
+                    <option>请选择</option>
+                </select>
+            </div>
+        </div> -->
+    </form>
+</div>
+<script>
+$(function(){
+    $('#save_btn').click(function(){
+        var title = $("#{{$Think.SYS_TITLE}}").val();
+        var data = {{{$Think.SYS_TITLE}}:title};
+        $.ajax({
+            url:'{{$baseUrl}}/api/v1/settingBase',
+            type:'post',
+            data:data,
+            dataType:'json',
+            async:false,
+            success:function(res){
+                if(res.status == 200){
+                    showTipOk(res.msg);
+                    window.location.reload();
+                }else{
+                    showTipError(res.msg);
+                }
+            },
+            error:function(){
+                showTipError('服务器异常,请重试');
+            }
+        })
+    });
+})
+
+</script>

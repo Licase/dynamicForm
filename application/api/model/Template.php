@@ -11,10 +11,4 @@ use think\Model;
 
 class Template extends Model {
     protected $table = 'tab_template';
-    protected $create_time = false;
-    protected $update_time = false;
-    function __construct($data = [])
-    {
-        parent::__construct($data);
-    }
 }

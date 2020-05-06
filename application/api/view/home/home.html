@@ -1,0 +1,45 @@
+<div class="page-header">
+    <h1>
+        首页
+    </h1>
+</div>
+
+<div class="row">
+    <div class="col-xs-12">
+        <!-- PAGE CONTENT BEGINS -->
+
+        <div class="row">
+            {{if condition="$myInfo"}}
+            <div class="col-sm-3">
+                <div class="widget-box">
+                    <div class="widget-header">
+                        <h4 class="smaller">
+                            客服信息
+                        </h4>
+                    </div>
+
+                    <div class="widget-body">
+                        <div class="widget-main bigger-120">
+                            <p>
+                                今日在线：{{$myInfo.online_today|translatesecond}}
+                            </p>
+                            <p>
+                                总在线时长：{{$myInfo.online_total|translatesecond}}
+                            </p>
+                            <p>接待人数：{{$myInfo.served_today}}/{{$myInfo.served_total}}</p>
+                            <hr>
+
+                            <!-- #section:elements.tooltip -->
+                            <p>
+                                <span class="btn btn-success btn-sm tooltip-success" data-rel="tooltip" data-placement="right" title="进入客服系统" onclick="window.location.href='{{$baseUrl}}/ask/support?uuid={{$myInfo.uuid}}'">进入</span>
+                            </p>
+
+                            <!-- /section:elements.tooltip -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {{/if}}
+        </div>
+    </div>
+</div>

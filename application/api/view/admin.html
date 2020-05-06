@@ -1,0 +1,110 @@
+{__NOLAYOUT__}
+<!DOCTYPE html>
+<html>
+<meta charset="utf-8" content="html/text;charset=utf-8">
+<head>
+	<title>客服系统</title>
+	<script type="text/javascript" src="{{$baseUrl}}/html/components/jquery.min.js"></script>
+	<link rel="stylesheet" href="{{$baseUrl}}/wsServer/wsServer.css" />
+</head>
+<body>
+<div class="page-header">人工客服系统</div>
+<div class="page-content">
+	<div class="clientList">
+		<div class="clientList-title">用户列表</div>
+		<div class="clientList-user"></div>
+	</div>
+	<div class="right">
+		<div id="msgbox" class="msgbox"></div>
+
+		<div class="sendbox">
+			<textarea name="text" id="text" maxlength="255"></textarea>
+			<span class="remain">0/255</span>
+			<input type="button" class="send" id="send" value="发送">
+		</div>
+	</div>
+</div>
+<div style="display: none;">
+    <video volume="1" id="msg_audio" >
+        <source src="{{$baseUrl}}/html/msg.wav" type="audio/wav">
+    </video>
+</div>
+
+<script type="text/javascript" src="{{$baseUrl}}/wsServer/wsServer.js"></script>
+<script type="text/javascript">
+	//保存用户信息
+	var clientInfo = [];
+	var info = {role:'admin'}; //{action:'',role:'',uid:'',to:''}
+	var curUid = null; //正在聊天的用户
+	var wsObj  = null;
+    var uuid = ''; //客服的uid
+    var wel_word = '{{$wel_word}}';
+    var tkTimer = null;
+    var tkPing = null;
+	function init(){
+		$('#send').click(function(){
+			sendMsg(curUid);
+		});
+		$('#text').on('keyup',function(e){
+			var now = $(this).val().length;
+			var limit = parseInt($(this).attr('maxlength') );
+			if(now > limit){
+				e.preventDefault();
+				return false;
+			}
+			$('.remain').html(now+'/'+limit);
+		});
+		$('#text').mousemove(function(){
+			$('#text').focus();
+		});
+		$('#text').focus();
+        statInfo('online');
+        setTimeout(function(){
+            tkTimer = setInterval(function(){
+				statInfo('ticker')
+		    },60000);
+        },3000)
+	}
+	function closeWs(){
+        statInfo('offline');
+        wsObj.status = 0;
+	}
+	$(function(){
+		var reg = /uuid=([^&]+)/;
+		var t = window.location.search.match(reg);
+		
+		if(t && t[1]){
+			uuid = t[1];
+		}else{
+			return false;
+		}
+		tinfo = getCookie('admin_'+uuid);
+		if(tinfo){
+			tinfo = JSON.parse( decodeURIComponent(tinfo));
+			info.name = tinfo.name;
+			info.uid = tinfo.uid;
+		}
+		var wshost = window.location.hostname;
+		wsObj = new WsServer("ws://"+wshost+":{{$service_port}}");
+	});
+
+	function statInfo(act){
+		$.ajax({
+			url:'{{$baseUrl}}/ask/supportStat?'+act,
+			data:{uuid:info.uid,role:info.role,act:act},
+			type:'post'
+		});
+    }
+    function sendPing(){
+        var t = JSON.stringify({action:'ping',role:'admin',uid:info.uid});
+        var tkPing = setInterval(function(){
+            if(wsObj.status != 2){
+                clearInterval(tkPing);
+                return ;
+            }
+            wsObj.send(t);
+        },10000);
+    }
+</script>
+</body>
+</html>

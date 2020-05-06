@@ -27,36 +27,29 @@
                 <table id="simple-table" class="table table-bordered table-hover" style="table-layout: fixed;">
                     <thead>
                         <tr>
-                            <th class="center col-xs-1">
-                                <label class="pos-rel">
-                                    <input type="checkbox" class="ace">
-                                    <span class="lbl"></span>
-                                </label>
-                            </th>
+                           
                             <th class="col-xs-1 center">序号</th>
                             <th class="col-xs-2 center">名称</th>
+                            <th class="col-xs-1 center" title="每人只能提交一次">单次提交</th>
                             <th class="col-xs-1 center">状态</th>
-                            <th class="col-xs-2 center">创建时间</th>
+                            <th class="col-xs-1 center">创建时间</th>
                             <th class="col-xs-3 center">备注</th>
                             <th>操作</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {{volist name="list" id="item" }}
+                        {{volist name="list.data" id="item" }}
                         <tr>
-                            <td class="center">
-                                <label class="pos-rel">
-                                    <input type="checkbox" value="{{$item.id}}" class="ace">
-                                    <span class="lbl"></span>
-                                </label>
-                            </td>
+                           
                             <td class="center">
                                 <?php echo $key + ($pagesize * ($page-1))+1 ?>
                             </td>
                             <td class="center">
                                 {{$item.name}}
                             </td>
-                            
+                            <td class="center">
+                                {{$item.onlyone ? '是' :'否'}}
+                            </td>
                             <td class="center">
                                 {{$item.status ? '显示' : '隐藏'}}
                             </td>
@@ -68,22 +61,26 @@
                                 {{$item.remark}}
                             </td>
                             <td>
-                                <button class="btn btn-info btn-xs" title="编辑" onclick="editProject({{$item.id}})">编辑</button>
+                                <button class="btn btn-info btn-xs" title="编辑" onclick="editProject('{{$item.uuid}}')">编辑</button>
                             
-                                <button class="btn btn-success btn-xs" title="设计项目流程" onclick="toDesign({{$item.id}})">设计流程</button>
+                                <button class="btn btn-success btn-xs" title="设计项目流程" onclick="toDesign('{{$item.uuid}}')">设计</button>
                                 {{if $item.status}}
-                                    <button class="btn btn-danger btn-xs" title="删除" onclick="hideProject({{$item.id}},'{{$item.name}}')">隐藏</button>
+                                    <button class="btn btn-danger btn-xs" title="删除" onclick="hideProject('{{$item.uuid}}','{{$item.name}}')">隐藏</button>
                                 {{else/}}
-                                    <button class="btn btn-danger btn-xs" title="恢复" onclick="showProject({{$item.id}},'{{$item.name}}')">恢复</button>
+                                    <button class="btn btn-danger btn-xs" title="恢复" onclick="showProject('{{$item.uuid}}','{{$item.name}}')">恢复</button>
                                 {{/if}}
-                                <button class="btn btn-yellow btn-xs" title="分享" >分享地址</button>
+                                {{if !$item.roles && $item['steps'] }}
+                                    <button class="btn btn-yellow btn-xs" onclick="showListUrl('{{$item.uuid}}')" title="展览数据" >展览地址</button>
+                                    <button class="btn btn-yellow btn-xs" onclick="showFormUrl('{{$item.uuid}}')" title="数据提交入口" >提交入口</button>
+                                {{/if}}
+                                
                             </td>
                         </tr>
                         {{/volist}} </tbody>
                 </table>
                 <div class="col-xs-2">
                     <div class="dataTables_info" id="dynamic-table_info" role="status" aria-live="polite">
-                        {{$pagesize}}条/页,共{{$total}}条
+                        {{$pagesize}}条/页,共{{$list.total}}条
                     </div>
                 </div>
 
@@ -97,6 +94,7 @@
         </div>
     </div>
 </div>
+
 
 <!-- 新增弹出框-->
 <div id="Project_add_modal" class="modal fade">
@@ -136,7 +134,7 @@
                     <div class="form-group">
                         <label class="col-sm-3 control-label no-padding-right" for="name"><i style="color: red;">*</i>管理人员角色：</label>
                         <div class="col-sm-8 checkbox">
-                            <span class="red">管理人员可查看及审批该项目所有数据</span><br/>
+                            <span class="red">管理人员可查看及审批项目数据</span><br/>
                         {{volist name="roles" id="role"}}
                         <div class="col-sm-4">
                         <label>
@@ -164,7 +162,15 @@
                         
                         </div>
                     </div>
-                    
+                    <div class="form-group">
+                        <label class="col-sm-3 control-label no-padding-right" for="isRequire">每个用户只能提交一次：</label>
+                        <div class="col-sm-9 checkbox">
+                            <label>
+                                <input name="isOnlyone" id="isOnlyone" class="ace ace-switch ace-switch-6" type="checkbox">
+                                <span class="lbl"></span>
+                            </label>
+                        </div>
+                    </div>
                     <div class="form-group">
                         <label class="col-sm-3 control-label no-padding-right" for="remark">备注：</label>
                         <div class="col-sm-9">
@@ -231,7 +237,7 @@
                     <div class="form-group">
                         <label class="col-sm-3 control-label no-padding-right" for="name"><i style="color: red;">*</i>管理人员角色：</label>
                         <div class="col-sm-8 checkbox">
-                            <span class="red">管理人员可查看及审批该项目所有数据</span><br/>
+                            <span class="red">管理人员可查看及审批项目数据</span><br/>
                         {{volist name="roles" id="role"}}
                         <div class="col-sm-4">
                         <label>
@@ -255,6 +261,15 @@
                         </label>
                         </div>
                         {{/volist}}
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-3 control-label no-padding-right" for="isRequire">每个用户只能提交一次：</label>
+                        <div class="col-sm-9 checkbox">
+                            <label>
+                                <input name="edit_isOnlyone" id="edit_isOnlyone" class="ace ace-switch ace-switch-6" type="checkbox">
+                                <span class="lbl"></span>
+                            </label>
                         </div>
                     </div>
                     <div class="form-group">
@@ -283,18 +298,85 @@
         </div><!-- /.modal-content -->
     </div>
 </div>
+<div id="Project_show_modal" class="modal fade">
+    <div class="modal-dialog" style="position: relative;top:40%;transform: translateY(-50%);min-width: 1024px;">
+        <div class="modal-content">
+            <div class="modal-header no-padding">
+                <div class="table-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
+                        <span class="white">×</span>
+                    </button>
+                    数据展示地址分享
+                </div>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal" id="Project_show" role="form">
+                    <div class="form-group">
+                        <label class="col-sm-3 control-label no-padding-right" >URL分享：</label>
+                        <label class="col-sm-6 control-label align-left"  id="show_url_box">URL分享：</label>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-3 control-label no-padding-right">二维码分享：</label>
+                        <label class="col-sm-6 control-label align-left"><img width="300px" height="300px" id="show_img_box" /></label>
+                    </div>
+                </form>
 
+            </div>
+        </div><!-- /.modal-content -->
+    </div>
+</div>
+<div id="Project_submit_modal" class="modal fade">
+    <div class="modal-dialog" style="position: relative;top:40%;transform: translateY(-50%);min-width: 1024px;">
+        <div class="modal-content">
+            <div class="modal-header no-padding">
+                <div class="table-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
+                        <span class="white">×</span>
+                    </button>
+                    数据提交入口发布
+                </div>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal" id="Project_submit" role="form">
+                    <div class="form-group">
+                        <label class="col-sm-3 control-label no-padding-right" for="name">URL分享：</label>
+                        <label class="col-sm-6 control-label align-left" id="submit_url_box"></label>          
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-3 control-label no-padding-right" for="name">二维码分享：</label>
+                        <label class="col-sm-6 control-label align-left"><img width="300px" height="300px" id="submit_img_box" /></label>
+                    </div>
+                </form>
+            </div>
+        </div><!-- /.modal-content -->
+    </div>
+</div>
 <script>
     var edit_id = 0;
     function toDesign(id) {
-        window.location.href = "/api/v1/project/design/" + id;
+        window.location.href = "{{$baseUrl}}/api/v1/project/design/" + id;
     }
-    function editProject(id) {
+
+    function showListUrl(uuid){
+        var url = window.location.origin +'{{$baseUrl}}/form/show/'+uuid;
+        $('#show_url_box').html(url);
+        $('#show_img_box').attr({src:"{{$baseUrl}}/qrcode.php?code="+url});
+        $('#Project_show_modal').modal('show');
+        
+    }
+    function showFormUrl(uuid){
+        var url = window.location.origin +'{{$baseUrl}}/form/'+uuid;
+        $('#submit_url_box').html(url);
+        $('#submit_img_box').attr({src:"{{$baseUrl}}/qrcode.php?code="+url});
+        $('#Project_submit_modal').modal('show');
+    }
+    function editProject(uuid) {
         $.ajax({
-            url: '/api/v1/project/' + id,
+            url: '{{$baseUrl}}/api/v1/project/' + uuid,
             dataType: 'json',
             async: false,
             success: function (res) {
+                checkLoginExpire(res);
                 if (res.status == 200) {
                     $('#edit_name').val(res.data.name);
                     if(res.data.temps){
@@ -302,7 +384,6 @@
                             if(parseInt(v) < 1){
                                 return
                             }
-                            console.log(v);
                             $('#temp_'+v).attr({checked:true});
 
                         });
@@ -326,7 +407,8 @@
                         });
                     }
                     $('#edit_remark').val(res.data.remark);
-                    edit_id = id;
+                    $('#edit_isOnlyone').attr({checked: parseInt(res.data.onlyone) ? true : false});
+                    edit_id = uuid;
                     $('#Project_edit_modal').modal('show');
                 } else {
                     showTipError(res.msg)
@@ -334,11 +416,11 @@
             },
         });
     }
-    function showProject(id,name){
-        hideProject(id,name,1);
+    function showProject(uuid,name){
+        hideProject(uuid,name,1);
     }
-    function hideProject(id, name,status) {
-        if (parseInt(id) < 1) {
+    function hideProject(uuid, name,status) {
+        if (!uuid) {
             showTipError('参数错误');
             return false;
         }
@@ -360,10 +442,11 @@
                 if (!res) {
                     return true;
                 }
-                $('.page-content').ace_ajax('post', '/api/v1/project', { id: id ,status:status}, false, {
+                $('.page-content').ace_ajax('post', '{{$baseUrl}}/api/v1/project', { uuid: uuid ,status:status}, false, {
                     dataType: 'json',
                     method: 'DELETE',
                     success: function (res) {
+                        checkLoginExpire(res);
                         if (res.status == 200) {
                             showTipOk(res.msg)
                             window.location.reload();
@@ -500,11 +583,13 @@
             roles:roles.join(','),
             admin_roles:admin_roles.join(','),
             temps:temps.join(','),
+            onlyone:$('#isOnlyone').is(':checked') == true ? 1 : 0,
             remark:$('#remark').val() 
             };
-            $('#Project_add_modal').ace_ajax('post', '/api/v1/project', data, false, {
+            $('#Project_add_modal').ace_ajax('post', '{{$baseUrl}}/api/v1/project', data, false, {
                 dataType: 'json',
                 success: function (res) {
+                    checkLoginExpire(res);
                     if (res.status == 200) {
                         showTipOk(res.msg)
                         window.location.reload();
@@ -539,12 +624,14 @@
             roles:roles.join(','),
             admin_roles:admin_roles.join(','),
             temps:temps.join(','),
+            onlyone:$('#edit_isOnlyone').is(':checked') == true ? 1 : 0,
             remark:$('#edit_remark').val() 
             };
-            $('#Project_edit_modal').ace_ajax('post', '/api/v1/project/' + edit_id, data, false, {
+            $('#Project_edit_modal').ace_ajax('post', '{{$baseUrl}}/api/v1/project/' + edit_id, data, false, {
                 dataType: 'json',
                 method: 'PUT',
                 success: function (res) {
+                    checkLoginExpire(res);
                     if (res.status == 200) {
                         showTipOk(res.msg)
                         window.location.reload();

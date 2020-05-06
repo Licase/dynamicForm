@@ -1,0 +1,183 @@
+{__NOLAYOUT__}
+<!DOCTYPE html>
+<html>
+<meta charset="utf-8" content="html/text;charset=utf-8">
+<head>
+	<title>人工服务</title>
+	<script type="text/javascript" src="{{$baseUrl}}/html/components/jquery.min.js"></script>
+	<script>localdebug=0</script>
+	<script type="text/javascript" src="{{$baseUrl}}/html/assets/js/x_debug.js"></script>
+	
+	<link rel="stylesheet" href="{{$baseUrl}}/wsServer/wsServer.css" />
+</head>
+<body>
+
+<div class="page-header">人工客服咨询</div>
+<div class="page-content" id="info_box">
+	<div class="content">
+		<table>
+			<tr>
+				<td><label>姓名：</label></td>
+				<td><input type="text" name="guest_name" id="guest_name" /></td>
+			</tr>
+			<tr>
+				<td><label>手机号：</label></td>
+				<td><input type="text" name="guest_mobile" id="guest_mobile" /></td>
+			</tr>
+			<tr>
+				<td><label>性别：</label></td>
+				<td style="text-align: left;"><input type="radio" checked name="guest_gender" value="1" class="guest_gender" />先生 &nbsp;<input type="radio" name="guest_gender" value="2" class="guest_gender" />女士&nbsp;</td>
+			</tr>
+			<tr>
+				<td colspan="2"><button class="ask_btn">开始咨询</button></td>
+			</tr>
+
+		</table>
+	</div>
+
+   
+</div>
+<div class="page-content" id="msg_box" style="display: none;">
+	<div id="msgbox" class="msgbox msgbox-client"></div>
+	<div class="sendbox-client">
+		<textarea name="text" id="text" maxlength="255"></textarea>
+		<span class="remain">0/255</span>
+		<input type="button" class="send" id="send" value="发送">
+	</div>
+</div>
+<div style="display: none;">
+    <video  preload="auto" id="msg_audio" >
+        <source src="{{$baseUrl}}/html/msg.wav" type="audio/wav">
+    </video>
+</div>
+<script type="text/javascript" src="{{$baseUrl}}/wsServer/wsServer.js"></script>
+<script type="text/javascript">
+    var name = null; //用户名称
+    var wsObj = null;
+var info = {role:'user'};
+var notOp = -5; //用户未操作时间
+
+$(function(){
+    check();
+	$('.ask_btn').click(function(){
+		var guest_name = $('#guest_name').val();
+		var guest_mobile = $('#guest_mobile').val();
+		if(!guest_name){
+			alert('请输入姓名');
+			return ;
+		}
+		if(!guest_mobile){
+			alert('请输入手机号');
+			return ;
+		}
+		reg = /^1\d{10}$/;
+		if(!reg.test(guest_mobile)){
+			alert('手机号格式错误');
+			return;
+		}
+		var gender = $('.guest_gender:checked').val();
+        var t = getUserInfo(guest_mobile,guest_name,gender);
+        if(t){
+            info.uid = t.uid;
+            info.name = t.name;
+            setCookie('guest_mobile',guest_mobile);
+            start();
+        }
+	})
+})
+function start(){
+    var wshost = window.location.hostname;
+    wsObj = new WsServer("ws://"+wshost+":{{$service_port}}");
+    $('#info_box').hide();
+    $('#msg_box').show();
+}
+function init(){
+    $('#send').click(function(){
+        sendMsg(0);
+        notOp = -5;
+    });
+    $('#text').on('keyup',function(e){
+        var now = $(this).val().length;
+        var limit = parseInt($(this).attr('maxlength') );
+        if(now > limit){
+            e.preventDefault();
+            return false;
+        }
+        $('.remain').html(now+'/'+limit);
+        notOp = -5;
+    });
+    
+    $('#text').val('').focus();
+    
+    var tk2 = setInterval(function(){
+        if(wsObj.status != 2){
+            clearInterval(tk2);
+            return ;
+        }
+        notOp += 5;
+        if(notOp >= {{$user_disconnect_second}} ){
+            var t = JSON.stringify({action:'close',role:'user',uid:info.uid});
+            wsObj.send(t);
+            wsObj.close();
+        }
+    },5000);
+    sendPing();
+
+    $.ajax({
+        url:'{{$baseUrl}}/ask/supportStat',
+        data:{uuid:info.uid,admin:info.toUid,act:'user'},
+        type:'post'
+    });
+}
+
+function sendPing(){
+    var t = JSON.stringify({action:'ping',role:'user',uid:info.uid});
+    var tk1 = setInterval(function(){
+        if(wsObj.status != 2){
+            clearInterval(tk1);
+            return ;
+        }
+        wsObj.send(t);
+    },10000);
+}
+function closeWs(){
+    showMsg(0,'连接已断开',2);
+}
+function check(){
+    var m = getCookie('guest_mobile')
+    if(m){
+        var t = getUserInfo(m);
+        if(t){
+            info.uid = t.uid;
+            info.name = t.name;
+            start();
+        }
+    }
+}
+function getUserInfo(mobile,name,gender){
+    var tinfo = {};
+    
+    $.ajax({
+        url:'{{$baseUrl}}/ask/guest',
+        data:{name:name,mobile:mobile,gender:gender},
+        type:'post',
+        dataType:'json',
+        async:false,
+        success:function(res){
+            if(res.status == 200){
+                tinfo.uid = res.data.uuid;
+                tinfo.name = res.data.name;
+            }else{
+                alert(res.msg);
+                tinfo = null;
+            }
+        },error:function(){
+            alert('服务器异常,请重试');
+            tinfo = null;
+        }
+    })
+    return tinfo;
+}
+</script>
+</body>
+</html>

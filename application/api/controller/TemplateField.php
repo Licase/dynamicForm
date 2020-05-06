@@ -3,8 +3,8 @@
 namespace app\api\controller;
 
 use app\api\controller\Base as Controller;
+use app\api\model\ProjectDataDetail;
 use app\api\model\Template;
-use app\api\model\TemplateDataDetail;
 use app\api\model\TemplateField as FieldModel;
 use think\Exception;
 
@@ -63,7 +63,7 @@ class TemplateField extends Controller
             return errorReturn($check);
         }
 
-        $t = $model->where(['name' => $name])->field('id')->find();
+        $t = $model->where(['name' => $name,'temp_id'=>$tid])->field('id')->find();
         if ($t) {
             return errorReturn('该名称已被使用');
         }
@@ -82,12 +82,82 @@ class TemplateField extends Controller
             return errorReturn('保存失败(' . $e->getMessage());
         }
     }
+    function read($id){
+        $tid = (int)input('t_id');
+        if($id < 1 || $tid < 1){
+            return errorReturn('非法访问');
+        }
+        $model = new FieldModel();
+        $info = $model->where(['id'=>$id,'temp_id'=>$tid])->find();
+        return sucReturn('ok',$info);
 
+    }
     /**
      * 编辑模板字段
      */
-    function updateTemplateField(){
+    function update($id){
+        $tid = (int)input('t_id');
+        if($tid < 1){
+            return errorReturn('非法访问');
+        }
+        $name = input('name');
+        $date_type = input('dataType');
+        $options = input('options');
+        $sort = (int)input('sort',20);
+        $is_title = (int)input('isTitle',0);
+        $is_require = (int)input('isRequire',0);
+        $is_filter = (int)input('isFilter',0);
+        $is_sort = (int)input('isSort',0);
+        $remark = input('remark');
+        $model = new FieldModel();
+       
+        if(in_array($date_type,[DT_SELECT,DT_RADIO,DT_CHECKBOX]) ){
+            if(!$options){
+                return errorReturn('请填写可选值');
+            }
+        }else{
+            $options = '';
+        }
+        $rule = [
+            'name' => 'require|max:32|regex:/[-\w\x{4e00}-\x{9fa5}]+/iu',
+            'sort' => 'number|>:0',
+            'remark' => 'max:255'
+        ];
+        $msg = [
+            'name.require' => '名称不能为空',
+            'name.max' => '名称不超过32个字符',
+            'name' => '名称由汉字、字母、数字、下划线及横线组成',
+            'sort'=>'排序值只能为正整数',
+            'remark.max' => '备注不超过255个字符'
+        ];
+        $data = [
+            'name' => $name, 
+            'data_type' =>$date_type,
+            'options' =>$options,
+            'sort'=>$sort,
+            'user_id'=>$this->user_id,
+            'is_title' => $is_title,
+            'is_require'=>$is_require,
+            'is_filter'=>$is_filter,
+            'is_sort'=>$is_sort,
+            'remark' => $remark,
+            'update_time' => date('Y-m-d H:i:s')
+        ];
+        $check = $this->validate($data, $rule, $msg);
+        if ($check !== true) {
+            return errorReturn($check);
+        }
 
+        $t = $model->where(['name' => $name])->field('id')->find();
+        if ($t && $t->id != $id) {
+            return errorReturn('该名称已被使用');
+        }
+        try {
+            $id = $model->where(['id'=>$id,'temp_id'=>$tid])->update($data);
+            return sucReturn('保存成功', $data);
+        } catch (Exception $e) {
+            return errorReturn('保存失败(' . $e->getMessage());
+        }
     }
     function del(){
         $id = (int)input('id');
@@ -100,8 +170,8 @@ class TemplateField extends Controller
             $template = new Template();
             $template->update(['field_count'=>$count],['id'=>$tid]);
         }
-        $modelData = new TemplateDataDetail();
-        $modelData->where(['flow_id'=>$tid,'field_id'=>$id])->delete();
+        $modelData = new ProjectDataDetail();
+        $modelData->where(['temp_id'=>$tid,'field_id'=>$id])->delete();
         return sucReturn('删除成功');
     }
 }

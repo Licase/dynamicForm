@@ -1,0 +1,373 @@
+
+<title>人员管理</title>
+
+<div class="page-header">
+    <h1>
+        客服管理
+        <small>
+            <i class="ace-icon fa fa-angle-double-right"></i>
+            客服列表
+        </small>
+    </h1>
+</div>
+
+<div class="row">
+    <div class="col-xs-12">
+        <!-- PAGE CONTENT BEGINS -->
+
+        <div class="row">
+            <div class="col-xs-12">
+                <button class="btn btn-info" id="supporter_add">
+                    <i class="ace-icon fa glyphicon glyphicon-plus bigger-120"></i>
+                    新增
+                </button>
+
+                <div class="hr hr-dotted"></div>
+
+                <table id="simple-table" class="table table-bordered table-hover" style="table-layout: fixed;">
+                    <thead>
+                        <tr>
+                            <th class="center col-xs-1">
+                                <label class="pos-rel">
+                                    <input type="checkbox" class="ace">
+                                    <span class="lbl"></span>
+                                </label>
+                            </th>
+                            <th class="col-xs-1 center">序号</th>
+                            <th class="col-xs-1 center">姓名/昵称</th>
+                            <th class="col-xs-2 center">客服名称</th>
+                            <th class="col-xs-1 center">(今日/总)在线时长</th>
+                            <th class="col-xs-1 center">(今日/总)接待人数</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{volist name="list.data" id="item" }}
+                        <tr>
+                            <td class="center">
+                                <label class="pos-rel">
+                                    <input type="checkbox" value="{{$item.uuid}}" class="ace">
+                                    <span class="lbl"></span>
+                                </label>
+                            </td>
+                            <td class="center">
+                                <?php 
+                                echo $key + ($pagesize * ($page-1))+1; ?>
+                            </td>
+                            <td class="center">
+                                {{$item.name}}/{{$item.nickname}}
+                            </td>
+                            
+                            <td class="center">
+                                {{$item.showname}}
+                            </td>
+                            <td class="center">
+                                {{$item.online_today|translateSecond}}/{{$item.online_total|translateSecond}}
+                            </td>
+                            <td class="center">
+                                {{$item.served_today}}/{{$item.served_total}}
+                            </td>
+                            <td>
+                                <button class="btn btn-info btn-xs" title="编辑" onclick="edit('{{$item.uuid}}','{{$item.showname}}')">编辑</button>
+                                <button class="btn btn-danger btn-xs" title="删除" onclick="del('{{$item.uuid}}','{{$item.showname}}')">删除</button>
+                            </td>
+                        </tr>
+                        {{/volist}} </tbody>
+                </table>
+                <div class="col-xs-2">
+                    <div class="dataTables_info" id="dynamic-table_info" role="status" aria-live="polite">
+                        {{$pagesize}}条/页,共{{$list.total}}条
+                    </div>
+                </div>
+
+                <div class="col-xs-6 pull-right">
+                    <div class="dataTables_paginate paging_simple_numbers" id="table_paginate">
+                        {{$paginate}}
+
+                    </div>
+                </div>
+            </div> <!-- /.span -->
+        </div>
+    </div>
+</div>
+
+<!-- 新增弹出框-->
+<div id="supporter_add_modal" class="modal fade">
+    <div class="modal-dialog" style="position: relative;top:40%;transform: translateY(-50%);min-width: 1024px;">
+        <div class="modal-content">
+            <div class="modal-header no-padding">
+                <div class="table-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
+                        <span class="white">×</span>
+                    </button>
+                    设置客服
+                </div>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal" id="form_supporter" role="form">
+                    <div class="form-group">
+                        <label class="col-sm-3 control-label no-padding-right" for="name"><i style="color: red;">*</i>客服名：</label>
+                        <div class="col-sm-9">
+                            <input type="text" id="showname" name="showname" placeholder="客服名称" maxlength="32" class="col-xs-10">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-3 control-label no-padding-right" for="role"><i style="color: red;">*</i>人员：</label>
+                        <div class="col-sm-9">
+                            <div class="checkbox">
+                                <select id="admin_id" name="admin_id"> 
+                                    <option value=""> 请选择人员 </option> 
+                                    {{volist name="admins" id="item" }} 
+                                    <option value="{{$item.uuid}}"> {{$item.name}} </option> 
+                                    {{/volist}} 
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                </form>
+
+            </div>
+
+            <div class="modal-footer no-margin-top center">
+                <button class="btn btn-sm btn-info" type="button" id="submit_add">
+                    <i class="ace-icon fa fa-check bigger-110"></i>
+                    提交
+                </button>
+                <button class="btn btn-sm btn-danger " data-dismiss="modal">
+                    <i class="ace-icon fa fa-times"></i>
+                    取消
+                </button>
+
+            </div>
+        </div><!-- /.modal-content -->
+    </div>
+</div>
+
+<!-- 编辑弹出框-->
+<div id="supporter_edit_modal" class="modal fade">
+    <div class="modal-dialog" style="position: relative;top:40%;transform: translateY(-50%);min-width: 1024px;">
+        <div class="modal-content">
+            <div class="modal-header no-padding">
+                <div class="table-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
+                        <span class="white">×</span>
+                    </button>
+                    编辑管理员信息
+                </div>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal" id="form_supporter_edit" role="form">
+                    <div class="form-group">
+                        <label class="col-sm-3 control-label no-padding-right" for="name"><i style="color: red;">*</i>客服名：</label>
+                        <div class="col-sm-9">
+                            <input type="text" id="edit_showname" name="edit_showname" placeholder="客服名称" maxlength="32" class="col-xs-10">
+                        </div>
+                    </div>
+                </form>
+
+            </div>
+
+            <div class="modal-footer no-margin-top center">
+                <button class="btn btn-sm btn-info" type="button" id="submit_edit">
+                    <i class="ace-icon fa fa-check bigger-110"></i>
+                    提交
+                </button>
+                <button class="btn btn-sm btn-danger " data-dismiss="modal">
+                    <i class="ace-icon fa fa-times"></i>
+                    取消
+                </button>
+
+            </div>
+        </div><!-- /.modal-content -->
+    </div>
+</div>
+
+<script>
+    var edit_id = null;
+    
+    function edit(uuid,name) {
+        edit_id = uuid;
+        $('#edit_showname').val(name);
+        $('#supporter_edit_modal').modal('show');
+    }
+   
+    function del(uuid, name) {
+        if (!uuid) {
+            showTipError('参数错误');
+            return false;
+        }
+        bootbox.confirm({
+            message: '确认删除(' + name + ')?',
+            buttons: {
+                confirm: {
+                    label: "确认",
+                    className: "btn-primary btn-sm",
+                },
+                cancel: {
+                    label: "取消",
+                    className: "btn-sm",
+                }
+            },
+            callback: function (res) {
+                if (!res) {
+                    return true;
+                }
+                $('.page-content').ace_ajax('post', '{{$baseUrl}}/api/v1/supporter', { uuid: uuid }, false, {
+                    dataType: 'json',
+                    method: 'DELETE',
+                    success: function (res) {
+                        checkLoginExpire(res);
+                        if (res.status == 200) {
+                            showTipOk(res.msg)
+                            window.location.reload();
+                        } else {
+                            showTipError(res.msg)
+                        }
+                    },
+                })
+            }
+        })
+    }
+    $(function () {
+        $('#supporter_add').click(function () {
+            $('#supporter_add_modal').modal('show');
+        });
+        $('#form_supporter').validate({
+            errorElement: 'div',
+            errorClass: 'help-block',
+            focusInvalid: false,
+            ignore: "",
+            rules: {
+                admin_id: {
+                    required: true,
+                },
+                showname: {
+                    required: true,
+                    maxlength:32,
+                },
+            },
+            messages: {
+                admin_id: {
+                    required: "请选择人员"
+                },
+                showname: {
+                    required: "客服名称不能为空"
+                }
+            },
+            highlight: function (e) {
+                $(e).closest('.form-group').addClass('has-error');
+            },
+            success: function (e) {
+                $(e).closest('.form-group').removeClass('has-error');//.addClass('has-info');
+                $(e).remove();
+            },
+            errorPlacement: function (error, element) {
+                if (element.is('input[type=checkbox]') || element.is('input[type=radio]')) {
+                    var controls = element.closest('div[class*="col-"]');
+                    if (controls.find(':checkbox,:radio').length > 1) controls.append(error);
+                    else error.insertAfter(element.nextAll('.lbl:eq(0)').eq(0));
+                }
+                else if (element.is('.select2')) {
+                    error.insertAfter(element.siblings('[class*="select2-container"]:eq(0)'));
+                }
+                else if (element.is('.chosen-select')) {
+                    error.insertAfter(element.siblings('[class*="chosen-container"]:eq(0)'));
+                }
+                else error.insertAfter(element);
+            }
+        });
+        $('#form_supporter_edit').validate({
+            errorElement: 'div',
+            errorClass: 'help-block',
+            focusInvalid: false,
+            ignore: "",
+            rules: {
+                showname: {
+                    required: true,
+                    maxlength:32,
+                },
+            },
+            messages: {
+                showname: {
+                    required: "客服名称不能为空"
+                }
+            },
+            highlight: function (e) {
+                $(e).closest('.form-group').addClass('has-error');
+            },
+            success: function (e) {
+                $(e).closest('.form-group').removeClass('has-error');//.addClass('has-info');
+                $(e).remove();
+            },
+            errorPlacement: function (error, element) {
+                if (element.is('input[type=checkbox]') || element.is('input[type=radio]')) {
+                    var controls = element.closest('div[class*="col-"]');
+                    if (controls.find(':checkbox,:radio').length > 1) controls.append(error);
+                    else error.insertAfter(element.nextAll('.lbl:eq(0)').eq(0));
+                }
+                else if (element.is('.select2')) {
+                    error.insertAfter(element.siblings('[class*="select2-container"]:eq(0)'));
+                }
+                else if (element.is('.chosen-select')) {
+                    error.insertAfter(element.siblings('[class*="chosen-container"]:eq(0)'));
+                }
+                else error.insertAfter(element);
+            }
+        });
+        //添加
+        $('#submit_add').click(function () {
+            if (!$('#form_supporter').valid()) {
+                return false;
+            }
+            if(!$('#showname').val()){
+                showTipError('请输入客服名');
+                return;
+            }
+            if(!$('#admin_id').val()){
+                showTipError('请选择人员');
+                return;
+            }
+            var data = { 
+                showname: $('#showname').val(),
+                uuid:$('#admin_id').val(),
+            };
+            $('#supporter_add_modal').ace_ajax('post', '{{$baseUrl}}/api/v1/supporter', data, false, {
+                dataType: 'json',
+                success: function (res) {
+                    checkLoginExpire(res);
+                    if (res.status == 200) {
+                        showTipOk(res.msg)
+                        window.location.reload();
+                    } else {
+                        showTipError(res.msg)
+                    }
+                },
+            });
+        })
+        $('#submit_edit').click(function () {
+            if (!$('#form_supporter_edit').valid()) {
+                return false;
+            }
+            var data = {
+                showname: $('#edit_showname').val(),
+            };
+            $('#supporter_edit_modal').ace_ajax('post', '{{$baseUrl}}/api/v1/supporter/'+edit_id, data, false, {
+                dataType: 'json',
+                method: 'PUT',
+                success: function (res) {
+                    checkLoginExpire(res);
+                    if (res.status == 200) {
+                        showTipOk(res.msg)
+                        window.location.reload();
+                    } else {
+                        showTipError(res.msg)
+                    }
+                },
+                error:function(){
+                    showTipError('请求失败');
+                }
+            });
+        })
+    });
+</script>

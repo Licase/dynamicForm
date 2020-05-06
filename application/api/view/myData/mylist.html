@@ -1,0 +1,130 @@
+<title>数据管理</title>
+
+<div class="page-header">
+    <h1>
+        项目管理
+        <small>
+            <i class="ace-icon fa fa-angle-double-right"></i>
+            数据管理
+        </small>
+    </h1>
+</div>
+
+<div class="row">
+    <div class="col-xs-12">
+        <!-- PAGE CONTENT BEGINS -->
+        
+        <div class="row">
+            <div class="col-xs-12">
+
+                <div class="col-xs-12">
+                    <select id="choosePro" onchange="choosePro(this.value)">
+                        <option value="">请选择项目</option>
+                    {{volist name="proList" id="item"}}
+                        <option value="{{$item.uuid}}">{{$item.name}}</option>
+                    {{/volist}}
+                    </select>
+                    <button class="btn btn-info btn-sm" id="data_add">
+                        <i class="ace-icon fa glyphicon glyphicon-plus bigger-120"></i>
+                        新增
+                    </button>
+                </div>
+
+                <div class="col-xs-12 hr hr-dotted"></div>
+                
+                <table id="simple-table" class="table table-bordered table-hover" style="table-layout: fixed;">
+                    <thead>
+                        <tr>
+                            <th class="col-xs-1 center">序号</th>
+                            <th class="col-xs-4 center">项目名</th>
+                            <th class="col-xs-1 center">数据量</th>
+                            <th class="col-xs-1 center">状态</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{volist name="list.data" id="item" }}
+                        <tr>
+                            <td class="center">
+                                <?php echo $key + ($pagesize * ($page-1))+1; ?>
+                            </td>
+                            <td class="center">{{$item.name}}</td>
+                            <td class="center">{{$item.total}}</td>
+                            <td class="center">{{$item.status == 1 ? '正常' : '隐藏'}}</td>
+                            <td>
+                                <button class="btn btn-info btn-xs" title="查看" onclick="viewData('{{$item.uuid}}')">查看</button>
+                            </td>
+                        </tr>
+                        {{/volist}} </tbody>
+                </table>
+                <div class="col-xs-2">
+                    <div class="dataTables_info" id="dynamic-table_info" role="status" aria-live="polite">
+                        {{$pagesize}}条/页,共{{$list.total}}条
+                    </div>
+                </div>
+
+                <div class="col-xs-6 pull-right">
+                    <div class="dataTables_paginate paging_simple_numbers" id="table_paginate">
+                        {{$paginate}}
+
+                    </div>
+                </div>
+            </div> <!-- /.span -->
+        </div>
+    </div>
+</div>
+
+
+<script>
+    function viewData(uuid){
+        window.location.href = '{{$baseUrl}}/api/v1/{{$isOwn ? 'mydata' : 'data'}}/'+uuid;
+    }
+
+    function delData(id, name) {
+        if (parseInt(id) < 1) {
+            showTipError('参数错误');
+            return false;
+        }
+        bootbox.confirm({
+            message: '确认删除(' + name + ')?',
+            buttons: {
+                confirm: {
+                    label: "确认",
+                    className: "btn-primary btn-sm",
+                },
+                cancel: {
+                    label: "取消",
+                    className: "btn-sm",
+                }
+            },
+            callback: function (res) {
+                if (!res) {
+                    return true;
+                }
+                $('#simple-table').ace_ajax('post', '{{$baseUrl}}/api/v1/data', { did: id }, false, {
+                    dataType: 'json',
+                    method: 'DELETE',
+                    success: function (res) {
+                        checkLoginExpire(res);
+                        if (res.status == 200) {
+                            showTipOk(res.msg)
+                            window.location.reload();
+                        } else {
+                            showTipError(res.msg)
+                        }
+                    },
+                })
+            }
+        })
+    }
+    $(function () {
+        $('#data_add').click(function () {
+            var uuid = $('#choosePro').val();
+            if(!uuid){
+                showTipError('请先选择项目');
+                return;
+            }
+             window.location.href="{{$baseUrl}}/api/v1/mydata/add/"+uuid;
+        })
+    });
+</script>

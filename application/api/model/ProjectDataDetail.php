@@ -11,8 +11,5 @@ use think\Model;
 
 class ProjectDataDetail extends Model {
     protected $table = 'tab_user_data_detail';
-    function __construct($data = [])
-    {
-        parent::__construct($data);
-    }
+
 }

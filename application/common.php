@@ -3,7 +3,7 @@
 /**
  * restful api ，通用错误返回
  */
-
+use Think\Log;
 function errorReturn($msg, $data = null, $code = 400)
 {
     $back = array(
@@ -90,23 +90,6 @@ function sha256($password, $username)
     return hash_hmac('sha256', $password, $username);
 }
 
-// 获取学段的文本
-function getClassTypeText($type)
-{
-    $text = '';
-    switch ($type) {
-        case 1:
-            $text = '小学';
-            break;
-        case 2:
-            $text = '初中';
-            break;
-        case 3:
-            $text = '高中';
-            break;
-    }
-    return $text;
-}
 
 function url_get_contents($url, $data = null, $method = 'GET', $header = [], $timeout = 10)
 {
@@ -238,7 +221,7 @@ function downloadFile($file_name,$showName = '')
 //获取唯一码
 function getUUid(){
      $d = time()*1000;
-     $uuid = preg_replace_callback('/[xy]/',function($c)use($d){
+     $uuid = preg_replace_callback('/[xyz]/',function($c)use($d){
         $r = ($d + rand(0,15))%16 | 0;
         $d = floor($d/16);
         switch($c[0]){
@@ -252,7 +235,41 @@ function getUUid(){
             $res = dechex($r);
         }
         return $res;
-     },'xxxxxxxx-xxxx-zxxx-yxxx-xxxxxxxxxxxx');
+     },'xxxzxxxyxxxx');
      return $uuid;
 
+}
+
+function translateSecond($second){
+    if($second < 1){
+        return '-';
+    }
+    $day = floor($second/86400);
+    $t = $second%86400;
+    $hour = floor($t/3600);
+    $t = $second%3600;
+    $minute = floor($t/60);
+    $r = '';
+    if($day){
+        $r .= $day.'天';
+    }
+    if($hour){
+        $r.= $hour.'小时';
+    }
+    if($minute){
+        $r .= $minute.'分';
+    }
+    return $r;
+}
+function myLog($log, $type='log') {
+    $log = var_export($log,true);
+    Log::write($log,$type,true);
+}
+
+function getPwdHash($pwd){
+    return password_hash($pwd,PASSWORD_BCRYPT);
+}
+
+function checkPwd($pwd,$hash){
+    return password_verify($pwd,$hash);
 }
