@@ -273,3 +273,17 @@ function getPwdHash($pwd){
 function checkPwd($pwd,$hash){
     return password_verify($pwd,$hash);
 }
+
+
+if(!function_exists('array_column')){
+    function array_column($array,$column,$index_key){
+        $new = array();
+        if(!$array){
+            return $new;
+        }
+        foreach($array as $val){
+            $new[$val[$index_key]] = $column === NULL ? $val : $val[$column];
+        }
+        return $new;
+    }
+}
