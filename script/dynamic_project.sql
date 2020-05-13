@@ -378,7 +378,7 @@ INSERT INTO `tab_permission` (`id`,`pid`,`name`,  `code`, `type`, `method`,`sort
 
 INSERT INTO `tab_permission` (`id`,`pid`,`name`,  `code`, `type`, `method`,`sorts`) select 7,2,'管理员管理', '/api/v1/admin', 'button','get' ,10 from dual where not exists(select * from `tab_permission` where id=7);
 INSERT INTO `tab_permission` (`id`,`pid`,`name`,  `code`, `type`, `method`,`sorts`) select 8,2,'客服管理', '/api/v1/supporter', 'button','get' ,10 from dual where not exists(select * from `tab_permission` where id=8);
-INSERT INTO `tab_permission` (`id`,`pid`,`name`,  `code`, `type`, `method`,`sorts`) select 9,2,'角色管理', '/api/v1/supporter/role', 'button','get' ,10 from dual where not exists(select * from `tab_permission` where id=9);
+INSERT INTO `tab_permission` (`id`,`pid`,`name`,  `code`, `type`, `method`,`sorts`) select 9,2,'角色管理', '/api/v1/role', 'button','get' ,10 from dual where not exists(select * from `tab_permission` where id=9);
 
 INSERT INTO `tab_permission` (`id`,`pid`,`name`,  `code`, `type`, `method`,`sorts`) select 10,3,'基本设置', '/api/v1/settingBase', 'button','get' ,10 from dual where not exists(select * from `tab_permission` where id=10);
 INSERT INTO `tab_permission` (`id`,`pid`,`name`,  `code`, `type`, `method`,`sorts`) select 11,3,'客服系统设置', '/api/v1/settingServer', 'button','get' ,10 from dual where not exists(select * from `tab_permission` where id=11);

@@ -82,13 +82,13 @@ class WsServer extends Worker{
                     
                     if($role == 'user'){
                         $toUid = $connect->toUid;
-                        if(isset($this->adminsInfo[$toUid]) ){
+                        if(isset($this->adminsInfo[$toUid]) && isset($this->connections[$this->adminsInfo[$toUid]['connect']])){
                             $this->connections[$this->adminsInfo[$toUid]['connect']]->send($this->format(json_encode(['msg'=>$msg,'uid'=>$uid])));
                         }
                         $apiData['from']= $uid;
                         $apiData['to'] = $toUid;
                     }elseif($role == 'admin'){
-                        if(isset($this->clientInfo[$uid])){
+                        if(isset($this->clientInfo[$uid]) && isset($this->connections[$this->clientInfo[$uid]])){
                             $this->connections[$this->clientInfo[$uid]]->send($this->format(json_encode(['msg'=>$msg])));
                         }
                         $apiData['from']= $connect->uid;

@@ -17,6 +17,14 @@
 
     <form class="form-horizontal" id="form_field_edit" role="form">
         <div class="form-group">
+            <label class="col-sm-3 control-label no-padding-right" for="name">咨询入口地址：</label>
+            <div class="col-sm-5 checkbox" >
+                <label id="client_addr">
+                  {{$tab_host}}ask/guest
+                </label>
+            </div>
+        </div>
+        <div class="form-group">
             <label class="col-sm-3 control-label no-padding-right" for="name">服务状态：</label>
             <div class="col-sm-3 checkbox" >
                 <label>
@@ -68,6 +76,7 @@ $(function(){
             f = t[1];
         }
         $('#tab_host').val(host+f);
+        $('#client_addr').html(host+f+'/'+'ask/guest');
     }
 
     $('#save_btn').click(function(){
