@@ -107,7 +107,7 @@ class Resource extends Controller
                 'name'=>$name,
                 'nickname'=>$name,
                 'uuid' => $uuid,
-                'password'=> password_hash(substr($mobile,-4),PASSWORD_BCRYPT),
+                'password'=> getPwdHash(substr($mobile,-4) ),
                 'mobile'=>$mobile,
                 'gender'=>$gender,
                 'access_time'=>time(),
