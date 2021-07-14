@@ -122,6 +122,7 @@ CREATE TABLE IF NOT EXISTS `tab_project` (
   `temps` varchar(255) NOT NULL DEFAULT '' COMMENT '项目中用到的模板',
   `roles` varchar(255) NOT NULL DEFAULT '' COMMENT '参与项目的角色,没有则所有用户可用',
   `admin_roles` varchar(255) NOT NULL DEFAULT '' COMMENT '项目中的管理角色',
+  `onlyone` tinyint(1) NOT NULL DEFAULT '0',
   `total` int(8) unsigned NOT NULL DEFAULT '0' COMMENT '现有数据',
   `remark` varchar(255) NOT NULL DEFAULT '',
   `create_time` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
