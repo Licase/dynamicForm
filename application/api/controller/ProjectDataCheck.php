@@ -31,7 +31,7 @@ class ProjectDataCheck extends Controller
         $modelProject = new Project();
         $where = ['b.user_id'=>$this->user_id,'b.total'=>['>',0]];
 
-        $tpl = 'proCheck/proList';
+        $tpl = 'ProCheck/proList';
         $baseUrl = Cache::get('baseUrl');
         $list = $modelProject->alias('a')->join('tab_user_data_check_stat b','a.id = b.p_id')->where($where)->field('a.id,a.name,b.total,a.status,a.uuid')
                     ->paginate(['list_rows' => $pagesize, 'page' => $page, 'path' => $baseUrl.'/api/v1/mycheck']);
@@ -137,7 +137,7 @@ class ProjectDataCheck extends Controller
         $data['pagesize'] = $pagesize;
 
         
-        return $this->view->fetch('proCheck/checkList', $data);
+        return $this->view->fetch('ProCheck/checkList', $data);
     }
 
     /**查看数据详情

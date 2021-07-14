@@ -45,7 +45,7 @@ class AdminSupporter extends Controller
 
         $data['name'] = $name;
 
-        return $this->view->fetch('supporter/list', $data);
+        return $this->view->fetch('Supporter/list', $data);
     }
 
     /**
