@@ -12,7 +12,7 @@
 + 开发环境windows,建议使用linux服务器,更换为swoole
 
 ## 安装
-1. 将master主干代码下载后,配置后相关的web服务器,将代码放到web服务器目录下，并将根目录设置为 dynamicForm/public
+1. 将master主干代码下载后,配置后相关的web服务器,将代码放到web服务器目录下，并将根目录设置为 dynamicForm/public, 给dynamicForm/Runtime目录777权限，以保证正常运行
 2. 建立数据库dynamic_project, 用户及密码：dynamic_project,并导入script/dynamic_project.sql数据，
 3. web服务器配置及数据库建立方法请自行搜索
 4. 配置后访问网站即可进入登录界面,默认用户名及密码为admin/admin
