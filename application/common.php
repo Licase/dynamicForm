@@ -220,7 +220,7 @@ function downloadFile($file_name,$showName = '')
 }
 //获取唯一码
 function getUUid(){
-     $d = time()*1000;
+     $d = time();
      $uuid = preg_replace_callback('/[xyz]/',function($c)use($d){
         $r = ($d + rand(0,15))%16 | 0;
         $d = floor($d/16);
