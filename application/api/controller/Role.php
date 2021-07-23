@@ -157,13 +157,15 @@ class Role extends Controller
         $data = ['name' => $name, 'remark' => $remark,'perms'=>$perms];
         $rule = [
             'name' => 'require|max:32|regex:/[-\w\x{4e00}-\x{9fa5}]+/iu',
+            'perms' => 'require',
             'remark' => 'max:255'
         ];
         $msg = [
             'name.require' => '名称不能为空',
             'name.max' => '名称不超过32个字符',
             'name' => '名称由汉字、字母、数字、下划线及横线组成',
-            'remark.max' => '备注不超过255个字符'
+            'remark.max' => '备注不超过255个字符',
+            'perms'=>'请选择权限'
         ];
         $check = $this->validate($data, $rule, $msg);
         if ($check !== true) {
@@ -194,9 +196,6 @@ class Role extends Controller
         $id = input('id');
         if($id < 1){
             return errorReturn('非法访问');
-        }
-        if($id == 1){
-            return errorReturn('内置角色不允许删除');
         }
         $model = new ModelRole();
         $model->where(['id' => $id])->update(['status'=>0]);
