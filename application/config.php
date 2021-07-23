@@ -175,7 +175,7 @@ return [
         'file_size' => 4*1024*1024, 
         // 日志记录级别
         'level' => ['error','sql','info'],
-        'apart_level' => ['wsServer','sql']
+        // 'apart_level' => ['wsServer']
     ],
 
     // +----------------------------------------------------------------------
