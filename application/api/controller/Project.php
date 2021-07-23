@@ -240,7 +240,7 @@ class Project extends Controller
             }
             return sucReturn('保存成功', $data);
         } catch (Exception $e) {
-            return errorReturn('保存失败(' . $e->getMessage());
+            return errorReturn('保存失败(' . $e->getMessage(),$e->getTrace());
         }
     }
 
