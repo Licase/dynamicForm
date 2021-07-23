@@ -165,6 +165,9 @@ class ProjectData extends Controller
         $flows = (new ProjectFlow())->where($where)->field('id,temps,step')->order('step')->select();
         $tempInfos = [];
         foreach($flows as $flow){
+            if(!$flow['temps']){
+                continue;
+            }
             $t = explode(',',$flow['temps']);
             foreach($t as $tid){
                 $tempInfos[$flow['step']][] = $tempInfo[$tid];
