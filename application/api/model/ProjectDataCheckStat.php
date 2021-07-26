@@ -12,7 +12,7 @@ use think\Model;
 class ProjectDataCheckStat extends Model {
     protected $table = 'tab_user_data_check_stat';
     static function incStat($pid,$userid){
-        $check = $this->where(['p_id'=>$pid,'user_id'=>$userid]);
+        // $check = $this->where(['p_id'=>$pid,'user_id'=>$userid]);
 
     }
     static function decStat($pid,$userid){
