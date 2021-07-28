@@ -44,6 +44,7 @@ Route::group('api',function(){
         Route::get('/mycheck$', 'api/ProjectDataCheck/index');
         Route::get('/mycheck/:uuid$', 'api/ProjectDataCheck/viewPro');
         Route::get('/mycheck/view/:id$', 'api/ProjectDataCheck/view');
+        Route::post('/mycheck/view/:id$', 'api/ProjectDataCheck/check');
 
         //项目管理
         //数据列表

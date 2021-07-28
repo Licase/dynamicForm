@@ -287,3 +287,125 @@ if(!function_exists('array_column')){
         return $new;
     }
 }
+
+
+/** 获取不同类型字段的html元素
+ *@param showType 显示方式,read ： 返回文本类,只看, write:以html元素返回,可填写
+ */
+function getFieldText($dataType,$fieldInfo,$showType='read',$disable = 0){
+    $html = '';
+    $fieldId = $fieldInfo['id'];
+    $value = isset($fieldInfo['val']) ? $fieldInfo['val'] : '';
+    if($showType == 'read'){
+        $html = $value;
+        if($value){
+            if($dataType == DT_CHECKBOX){
+                $html = str_replace('|-|',',',$value);
+            }elseif($dataType == DT_FILE){
+                $html .= '<button title="下载文件" '.( isset($fieldInfo['detail_id']) ? 'onclick="downFile('.$fieldInfo['detail_id'].')"' : '' ).' ><i class="ace-icon fa fa-download blue"></i></button>';
+            }
+        }else{
+            $html = '-';
+        }
+        return $html;
+    }
+
+    switch($dataType){
+        case DT_TEXT:
+            $html = '<input class="form-control" '.($disable ? 'disabled' : '').' type="text" name="field['.$fieldId.']" id="field_'.$fieldId.'" value="'.$value.'" maxlength="32" /> ';
+            break;
+        case DT_NUMBER:
+            $html = '<input class="form-control" '.($disable ? 'disabled' : '').' type="number" name="field['.$fieldId.']" id="field_'.$fieldId.'" value="'.$value.'" maxlength="32" /> ';
+            break;
+        case DT_DATE:
+            $html = '<div class="input-group">
+            <input class="form-control"  id="field_'.$fieldId.'" name="field['.$fieldId.']" type="text" '.($disable ? 'disabled' : '').'  value="'.$value.'">
+            <span class="input-group-addon">
+                <i class="fa fa-clock-o bigger-110"></i>
+            </span>
+            <script>
+                $(function(){
+                    $(\'#field_'.$fieldId.'\').datetimepicker({
+                format: \'YYYY-MM-DD\',//use this option to display seconds
+                icons: {
+                    time: \'fa fa-clock-o\',
+                    date: \'fa fa-calendar\',
+                    up: \'fa fa-chevron-up\',
+                    down: \'fa fa-chevron-down\',
+                    previous: \'fa fa-chevron-left\',
+                    next: \'fa fa-chevron-right\',
+                    today: \'fa fa-arrows \',
+                    clear: \'fa fa-trash\',
+                    close: \'fa fa-times\'
+                }
+                }).next().on(ace.click_event, function(){
+                    $(this).prev().focus();
+                });
+                });
+            </script>
+            </div>';
+            break;
+        case DT_RADIO:
+            $html = '<div class="radio">';
+            
+            if( isset($fieldInfo['options']) && $fieldInfo['options']){
+                $vals = explode('|',$fieldInfo['options']);
+                foreach($vals as $v){
+                    $v = trim($v);
+                    if(!$v){
+                        continue;
+                    }
+                    $html .= '<label>
+                            <input name="field['.$fieldId.']" '.($value == $v ? 'checked' : '').' type="radio" '.($disable ? 'disabled' : '').'  value="'.$v.'" class="ace">
+                            <span class="lbl">'.$v.'</span>
+                        </label>';
+                }
+            }
+            $html .= '</div>';
+            break;
+        case DT_CHECKBOX:
+            $html = '<div class="checkbox">';
+            if( isset($fieldInfo['options']) && $fieldInfo['options']){
+                $vals = explode('|',$fieldInfo['options']);
+                foreach($vals as $v){
+                    $v = trim($v);
+                    if($v === '' || $v === null){
+                        continue;
+                    }
+                    $html .= '<label>
+                            <input name="field['.$fieldId.'][]" '.($value == $v ? 'checked' : '').' type="checkbox" '.($disable ? 'disabled' : '').'  value="'.$v.'" class="ace">
+                            <span class="lbl">'.$v.'</span>
+                        </label>';
+                }
+            }
+            $html .= '</div>';
+            break;
+        case DT_SELECT:
+            $html = '<select class="form-control" '.($disable ? 'disabled' : '').'  name="field['.$fieldId.']" id="field_'.$fieldId.'">';
+            $html .= '<option value="">请选择</option>';
+    
+            if(isset($fieldInfo['options'])  && $fieldInfo['options']){
+                $vals = explode('|',$fieldInfo['options']);
+                foreach($vals as $v){
+                    $v = trim($v);
+                    if($v === '' || $v === null){
+                        continue;
+                    }
+                    $html .= '<option '.($value == $v ? 'selected' : '').' value="'.$v.'">'.$v.'</option>';
+                }
+            }
+    
+        $html .= '</select>';
+            break;
+        case DT_FILE:
+            $html = '<input class="form-control" type="file" name="field['.$fieldId.']" '.($disable ? 'disabled' : '').'  value="'.$value.'" id="field_'.$fieldId.'" />' ;
+            break;
+        case DT_TEXTAREA:
+            $html = '<textarea name="field['.$fieldId.']" value="'.$value.'" id="field_'.$fieldId.'" '.($disable ? 'disabled' : '').' class="col-xs-10" rows="3"
+            style="overflow: hidden; word-wrap: break-word;"></textarea>';
+            break;
+        default:
+            
+    }
+    return $html;
+}

@@ -84,17 +84,18 @@
 
                 <!-- #section:elements.accordion -->
                 <div id="accordion" class="accordion-style1 panel-group">
+                    <?php $index= 1;?>
                     {{volist name="list" id="item"}}
                     <div class="panel panel-default">
                         <div class="panel-heading">
                             <h4 class="panel-title">
                                 <a class="accordion-toggle collapsed" data-toggle="collapse" data-parent="#accordion" href="#list-{{$item.id}}" aria-expanded="false">
                                     <i class="bigger-110 ace-icon fa fa-angle-right" data-icon-hide="ace-icon fa fa-angle-down" data-icon-show="ace-icon fa fa-angle-right"></i>
-                                    &nbsp;{{$firstTitle.name}}-{{$key+1}}: {{$item['userData'][$firstTitle['id']]['val']}}
+                                    &nbsp;{{$firstTitle.name}}-{{$index}}: {{$item['userData'][$firstTitle['id']]['val']}}
                                 </a>
                             </h4>
                         </div>
-
+                        <?php $index++; ?>
                         <div class="panel-collapse collapse" id="list-{{$item.id}}" aria-expanded="false" style="height: 0px;">
                             <div class="panel-body">
                                 {{volist name="titles" id="st"}}

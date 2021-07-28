@@ -78,6 +78,10 @@ class ProjectPublic extends Controller
                     $tmp[ $t['field_id'] ] = $t->getData();
                 }
             }
+            if(!$tmp){
+                unset($list[$key]);
+                continue;
+            }
             $list[$key]['userData'] = $tmp;
         }
         $data['titles'] = $titles;
@@ -85,7 +89,6 @@ class ProjectPublic extends Controller
         $data['list'] = $list;
         $data['page'] = $page;
         $data['pagesize'] = $pagesize;
-
         
         return $this->view->fetch('public/list', $data);
     }
@@ -166,7 +169,7 @@ class ProjectPublic extends Controller
         $flowInfo = $modelFlow->where(['p_id'=>$p_id,'step'=>$cur_step])->field('temps')->find();
 
         $tempFields = (new TemplateField())->where(['temp_id'=>['in',$flowInfo['temps']]])
-                            ->field('id,name,data_type as dataType,options,is_require,is_sort')
+                            ->field('id,temp_id,name,data_type as dataType,options,is_require,is_sort')
                             ->select();
         $fields = array_column( $tempFields->toArray() ,null,'id');
 
@@ -306,6 +309,7 @@ class ProjectPublic extends Controller
                     'user_id' => 0,
                     'step' => $cur_step,
                     'field_id' => $fid,
+                    'temp_id' => $fields[$fid]['temp_id'],
                     'val' => $val
                 ];
                 $modelDetail->create($tmp);
@@ -317,6 +321,7 @@ class ProjectPublic extends Controller
                     'user_id' => 0,
                     'step' => $cur_step,
                     'field_id' => $fid,
+                    'temp_id' => $fields[$fid]['temp_id'],
                     'val' => $item['origin_name'],
                     'remark' => $item['saved_name'],
                 ];
@@ -332,11 +337,12 @@ class ProjectPublic extends Controller
 
     function down($id){
         $model = new ProjectDataDetail();
-        $info = $model->where(['id'=>$id])->field('flow_id,remark')->find();
+        $info = $model->where(['id'=>$id])->field('p_id,remark')->find();
         if(!$info){
             return "文件不存在";
         }
-        $filename = UPLOAD_DIR.$this->getFileDir($info['flow_id']).$info['remark'];
+        $uuid = (new Project())->where('id',$info['p_id'])->value('uuid');
+        $filename = UPLOAD_DIR.$this->getFileDir($uuid).$info['remark'];
         downloadFile($filename);
         
     }

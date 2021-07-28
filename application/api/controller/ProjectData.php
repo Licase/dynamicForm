@@ -243,6 +243,7 @@ class ProjectData extends Controller
                             ->field('id,temp_id,name,data_type as dataType,options,is_require')
                             ->order('temp_id,sort,id')->select();
         $fields = [];
+        $field_require = [];
         foreach($tempFields as $item){
             if($item['is_require']){
                 $field_require[$item['id']] = [ 'dataType'=>$item['dataType'],'name'=>$item['name']];
@@ -250,30 +251,10 @@ class ProjectData extends Controller
             $fields[$item['temp_id']][] = $item->getData();
         }
         $data['tempFields'] = $fields;
-        $field_require = [];
-        foreach($tempFields as $v){
-            if(!$v['is_require']){
-                continue;
-            }
-            $field_require[$v['id']] = [ 'dataType'=>$v['dataType'],'name'=>$v['name']];
-        }
         $data['fieldRequire'] = $field_require;
         
-        $data['auditUser'] =  [];
-        if($pInfo['admin_roles']){
-            $modelAdmin = new Admin();
-            $admins = $modelAdmin->alias('a')
-            ->join('tab_admin_role b','a.id = b.admin_id')
-            ->where(['b.role_id'=>['in',$pInfo['admin_roles'] ],'status'=>1 ])
-            ->field('a.id,a.name,a.nickname')
-            ->order('name')
-            ->select();
-            if($admins){
-                $data['auditUser'] = $admins->toArray();
-            }
-        }
-        
-
+        $data['auditUser'] =  (new Admin())->getAuthUsers($pInfo['admin_roles']);
+        $data['userId'] = $this->user_id;
         $tpl = 'projectData/add';
         return $this->view->fetch($tpl, $data);
     }
@@ -285,12 +266,12 @@ class ProjectData extends Controller
         $fieldData = input('field/a');
         $check_user = (int)input('check_user',0);
         $fromcode = input('code','0');
+        $cur_step = input('curStep',1);
+        $dataId = input('dataId',0);
         
         $modelProject = new Project();
         $pInfo = $modelProject->getProInfo($uuid);
         $p_id = $pInfo['id'];
-        
-        $cur_step = 1;
         
         //获取流程信息，模板信息，验证数据有效
         $modelFlow = new ProjectFlow();
@@ -308,7 +289,6 @@ class ProjectData extends Controller
         $error = '';
         $field_files = [];
         $sortId = 0;
-      
         foreach($fields as $field){
             $field_id = $field['id'];
             if($field['dataType'] == DT_FILE){ //上传文件字段单独判断
@@ -410,41 +390,54 @@ class ProjectData extends Controller
         $time = date('Y-m-d H:i:s');
         $modelData = new ModelProjectData();
         $user_id = $this->user_id ?: 0;
-        $sortData = '';
-        if($sortId && isset($fieldData[$sortId])){
-            $sortData = $fieldData[$sortId];
+        $isComplete = $pInfo['steps'] <= $cur_step ? 1 : 0;
+        if($dataId < 1){
+            $sortData = '';
+            if($sortId && isset($fieldData[$sortId])){
+                $sortData = $fieldData[$sortId];
+            }
+            $savedData = [
+            'p_id'=>$p_id,
+            'user_id'=>$user_id,
+            'cur_step'=> $isComplete ? $cur_step : $cur_step+1,
+            'sorts' => $sortData,
+            'cur_day' => date('Y-m-d'),
+            'from_code' => $fromcode,
+            'is_complete'=>$isComplete,
+            'create_time'=>$time,
+            'update_time'=>$time
+            ];
+            $dataId = $modelData->insertGetid($savedData);
+        }else{
+            $savedData = [
+                'cur_step'=> $isComplete ? $cur_step : $cur_step+1,
+                'cur_day' => date('Y-m-d'),
+                'is_complete'=> $isComplete,
+                'update_time'=>$time
+            ];
+            $modelData->where(['id'=>$dataId])->update($savedData);
         }
-        $savedData = [
-        'p_id'=>$p_id,
-        'user_id'=>$user_id,
-        'cur_step'=> $cur_step,
-        'sorts' => $sortData,
-        'cur_day' => date('Y-m-d'),
-        'from_code' => $fromcode,
-        'is_complete'=> $flowInfo['has_check'] ? 0 : 1,
-        'create_time'=>$time,
-        'update_time'=>$time];
-        $dataId = $modelData->insertGetid($savedData);
-       
         if($dataId > 0){
             
             $modelDetail = new ProjectDataDetail();
-            
-            foreach($fieldData as $fid => $val){
-                if(!is_array($val) && ($val === '' || $val === null) ){
-                    continue;
+            if($fieldData){
+                foreach($fieldData as $fid => $val){
+                    if(!is_array($val) && ($val === '' || $val === null) ){
+                        continue;
+                    }
+                    $tmp = [
+                        'p_id' => $p_id,
+                        'data_id' => $dataId,
+                        'user_id' => $user_id,
+                        'step' => $cur_step,
+                        'temp_id' => $fields[$fid]['temp_id'],
+                        'field_id' => $fid,
+                        'val' => $val
+                    ];
+                    $modelDetail->create($tmp);
                 }
-                $tmp = [
-                    'p_id' => $p_id,
-                    'data_id' => $dataId,
-                    'user_id' => $user_id,
-                    'step' => $cur_step,
-                    'temp_id' => $fields[$fid]['temp_id'],
-                    'field_id' => $fid,
-                    'val' => $val
-                ];
-                $modelDetail->create($tmp);
             }
+          
             foreach($field_files as $fid => $item){
                 $tmp = [
                     'p_id' => $p_id,
@@ -458,13 +451,23 @@ class ProjectData extends Controller
                 ];
                 $modelDetail->create($tmp);
             }
-            $modelProject->where(['id'=>$p_id])->setInc('total');
-            if($flowInfo['has_check']){
-                $modelCheck = new ProjectDataCheck();
-                $modelCheck->create(['p_id'=>$p_id,'data_id'=>$dataId,'step'=>1,'user_id'=>$this->user_id,'check_user'=>$check_user]);
-                
+            $modelCheck = new ProjectDataCheck();
+            if($cur_step > 1){ //通过时,把上一步改成审批通过
+                $where = ['p_id'=>$p_id,'data_id'=>$dataId,'step'=>$cur_step-1];
+                $modelCheck->where($where)->update(['check_status'=>1,'check_time'=>date('Y-m-d H:i:s')]);
+                ProjectDataCheckStat::decStat($p_id,$this->user_id);
+            }
+            if($flowInfo['has_check'] && !$isComplete){
+                $where = ['p_id'=>$p_id,'data_id'=>$dataId,'step'=>$cur_step];
+                $info = $modelCheck->where($where)->value('id');
+                if($info){
+                    $modelCheck->where(['id'=>$info])->update(['check_status'=>0,'check_user'=>$check_user,'check_time'=>null]);
+                }else{
+                    $modelCheck->create(['p_id'=>$p_id,'data_id'=>$dataId,'step'=>$cur_step,'user_id'=>$this->user_id,'check_user'=>$check_user]);
+                }
                 ProjectDataCheckStat::incStat($p_id,$check_user);
             }
+            
         }else{
             return errorReturn('保存失败,请重试');
         }

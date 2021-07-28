@@ -101,7 +101,7 @@ class MyData extends Controller
                         ->join('tab_admin b','c.check_user = b.id','LEFT')
                         ->where($where)
                         ->field('a.id,a.p_id,cur_step,check_status,b.name,b.nickname,check_time,is_complete,from_code,a.create_time')
-                        ->order('sorts,id desc')
+                        ->order('a.id desc')
                         ->paginate(['list_rows' => $pagesize, 'page' => $page, 'path' =>$baseUrl.'/api/v1/myData'])
                         ->each(function(&$item,$key)use($detailModel,$titles){
                             $where =['p_id'=>$item['p_id'],'data_id'=>$item['id']];
@@ -122,7 +122,7 @@ class MyData extends Controller
                                     $item['check'] = '驳回';
                                 break;
                                 default:
-                                    $item['check'] = '-';
+                                    $item['check'] = '未审核';
                             }
                             if($tmps){
                                 foreach($tmps as $t){
@@ -160,23 +160,47 @@ class MyData extends Controller
         $data = [];
         
         $p_id = $info['p_id'];
+        $curStep = $info['cur_step'];
+        $data['curStep'] = $curStep;
+        
         $proInfo = (new Project())->getProInfo($p_id,1);
         $data['proInfo'] = $proInfo;
-
+        $data['userId'] = $this->user_id;
         $tempInfo = (new Template())->where(['id'=>['in',$proInfo['temps']]])->field('id,name')->select();
         $tempInfo = array_column($tempInfo->toArray(),null,'id');
 
         $where = ['p_id'=>$p_id];
-        $flows = (new ProjectFlow())->where($where)->field('id,temps,step')->order('step')->select();
+        $flows = (new ProjectFlow())->where($where)->field('id,temps,has_check,step')->order('step')->select();
         $tempInfos = [];
+        $hasCheck = false;
+       
         foreach($flows as $flow){
+            if($curStep == $flow['step'] && $flow['has_check']){
+                $hasCheck = true;
+            }
             $t = explode(',',$flow['temps']);
             foreach($t as $tid){
                 $tempInfos[$flow['step']][] = $tempInfo[$tid];
             }
         }
-        $checkInfo = (new ProjectDataCheck())->alias('a')->join('tab_admin b','a.check_user = b.id')->where(['p_id'=>$p_id,'data_id'=>$id])->field('step,b.name,b.nickname,check_status,check_time,a.remark')->select();
-        $data['checkInfo'] = array_column( ($checkInfo ? $checkInfo->toArray() : []),null,'step');
+        $data['hasCheck'] = $hasCheck;
+       
+        $checkInfo = (new ProjectDataCheck())->alias('a')->join('tab_admin b','a.check_user = b.id')->where(['p_id'=>$p_id,'data_id'=>$id])->field('step,b.name,b.nickname,user_id,a.check_user,check_status,check_time,a.remark')->select();
+        if($checkInfo){
+            $checkInfo = $checkInfo->toArray();
+            $checkInfo  = array_column( $checkInfo,null,'step');
+        }else{
+            $checkInfo = [];
+        }
+        $editFlag = 0;
+        // 如果上一步的审核人是自己,则可以编辑与驳回 || 当前步是自己提交的并且被驳回,可以重新编辑
+        if(isset($checkInfo[$curStep-1]) && $checkInfo[$curStep-1]['check_user'] == $this->user_id && $checkInfo[$curStep-1]['check_status'] == 0
+        || isset($checkInfo[$curStep]) && $checkInfo[$curStep]['user_id'] == $this->user_id && $checkInfo[$curStep]['check_status'] == 2 ){
+            $editFlag = $curStep;
+        }
+        $data['editFlag'] = $editFlag;
+        $data['checkInfo'] = $checkInfo;
+
         $modelDetail = new ProjectDataDetail();
         $fieldDatas = $modelDetail->where(['p_id'=>$p_id,'data_id'=>$id])->field('id,field_id,val,remark')->select();
         $fieldDatas = $fieldDatas ? $fieldDatas->toArray() : [];
@@ -184,16 +208,20 @@ class MyData extends Controller
         
         $modelField = new TemplateField();
         $fields = $modelField->where(['temp_id'=> ['in',$proInfo['temps']]])
-                            ->field('id,temp_id,name,data_type as dataType')
+                            ->field('id,temp_id,name,data_type as dataType,is_require,options')
                             ->order('temp_id,sort,id')
                             ->select();
         $fields = $fields ? $fields->toArray() : [];
         $tempFields = [];
+        $field_require = [];
         foreach($fields as $item){
             $fid = (int)$item['id'];
             $item['val'] = '';
             $item['remark'] = '';
             $item['detail_id'] = 0;
+            if($item['is_require']){
+                $field_require[$fid] = [ 'dataType'=>$item['dataType'],'name'=>$item['name']];
+            }
             if(isset($fieldDatas[$fid])){
                 $item['val'] = $fieldDatas[$fid]['val'];
                 $item['remark'] = $fieldDatas[$fid]['remark'];
@@ -201,12 +229,14 @@ class MyData extends Controller
             }
             $tempFields[$item['temp_id']][] = $item;
         }
+        $data['fieldRequire'] = $field_require;
         unset($fields);
-        $data['data_id'] = $id;
+        $data['auditUser'] =  (new Admin())->getAuthUsers($proInfo['admin_roles']);
+        $data['dataId'] = $id;
         $data['isOwn'] = 1;
         $data['tempInfos'] = $tempInfos;
         $data['tempFields'] = $tempFields;
-        return $this->view->fetch('projectData/view',$data);
+        return $this->view->fetch('proCheck/view',$data);
 
     }
 
@@ -246,6 +276,7 @@ class MyData extends Controller
                             ->field('id,temp_id,name,data_type as dataType,options,is_require')
                             ->order('temp_id,sort,id')->select();
         $fields = [];
+        $field_require = [];
         foreach($tempFields as $item){
             if($item['is_require']){
                 $field_require[$item['id']] = [ 'dataType'=>$item['dataType'],'name'=>$item['name']];
@@ -253,30 +284,10 @@ class MyData extends Controller
             $fields[$item['temp_id']][] = $item->getData();
         }
         $data['tempFields'] = $fields;
-        $field_require = [];
-        foreach($tempFields as $v){
-            if(!$v['is_require']){
-                continue;
-            }
-            $field_require[$v['id']] = [ 'dataType'=>$v['dataType'],'name'=>$v['name']];
-        }
         $data['fieldRequire'] = $field_require;
+        $data['userId'] = $this->user_id;
         
-        $data['auditUser'] =  [];
-        if($pInfo['admin_roles']){
-            $modelAdmin = new Admin();
-            $admins = $modelAdmin->alias('a')
-            ->join('tab_admin_role b','a.id = b.admin_id')
-            ->where(['b.role_id'=>['in',$pInfo['admin_roles'] ],'status'=>1 ])
-            ->field('a.id,a.name,a.nickname')
-            ->order('name')
-            ->select();
-            if($admins){
-                $data['auditUser'] = $admins->toArray();
-            }
-        }
-        
-
+        $data['auditUser'] =  (new Admin())->getAuthUsers($pInfo['admin_roles']);
         $tpl = 'projectData/add';
         return $this->view->fetch($tpl, $data);
     }
