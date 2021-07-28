@@ -219,13 +219,13 @@ class MyData extends Controller
             $item['val'] = '';
             $item['remark'] = '';
             $item['detail_id'] = 0;
-            if($item['is_require']){
-                $field_require[$fid] = [ 'dataType'=>$item['dataType'],'name'=>$item['name']];
-            }
             if(isset($fieldDatas[$fid])){
                 $item['val'] = $fieldDatas[$fid]['val'];
                 $item['remark'] = $fieldDatas[$fid]['remark'];
                 $item['detail_id'] = $fieldDatas[$fid]['id'];
+            }
+            if($item['is_require'] && ($item['dataType'] != DT_FILE || $item['detail_id'] < 1 ) ){
+                $field_require[$fid] = [ 'dataType'=>$item['dataType'],'name'=>$item['name']];
             }
             $tempFields[$item['temp_id']][] = $item;
         }

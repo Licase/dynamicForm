@@ -367,13 +367,14 @@ function getFieldText($dataType,$fieldInfo,$showType='read',$disable = 0){
             $html = '<div class="checkbox">';
             if( isset($fieldInfo['options']) && $fieldInfo['options']){
                 $vals = explode('|',$fieldInfo['options']);
+                $selected = explode('|-|',$value);
                 foreach($vals as $v){
                     $v = trim($v);
                     if($v === '' || $v === null){
                         continue;
                     }
                     $html .= '<label>
-                            <input name="field['.$fieldId.'][]" '.($value == $v ? 'checked' : '').' type="checkbox" '.($disable ? 'disabled' : '').'  value="'.$v.'" class="ace">
+                            <input name="field['.$fieldId.'][]" '.(in_array($v,$selected) ? 'checked' : '').' type="checkbox" '.($disable ? 'disabled' : '').'  value="'.$v.'" class="ace">
                             <span class="lbl">'.$v.'</span>
                         </label>';
                 }
@@ -398,7 +399,7 @@ function getFieldText($dataType,$fieldInfo,$showType='read',$disable = 0){
         $html .= '</select>';
             break;
         case DT_FILE:
-            $html = '<input class="form-control" type="file" name="field['.$fieldId.']" '.($disable ? 'disabled' : '').'  value="'.$value.'" id="field_'.$fieldId.'" />' ;
+            $html = '<input class="form-control" type="file" name="field['.$fieldId.']" '.($disable ? 'disabled' : '').'  value="" id="field_'.$fieldId.'" />'.$value ;
             break;
         case DT_TEXTAREA:
             $html = '<textarea name="field['.$fieldId.']" value="'.$value.'" id="field_'.$fieldId.'" '.($disable ? 'disabled' : '').' class="col-xs-10" rows="3"

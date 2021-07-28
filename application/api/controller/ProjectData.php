@@ -357,10 +357,20 @@ class ProjectData extends Controller
             mkdir($uploadPath,0755,true);
         }
         $error = '';
-        
+        $modelData = new ModelProjectData();
+        $modelDetail = new ProjectDataDetail();
+
         foreach($field_files as $fid => $field){
+            $val = '';
+            if($dataId > 0){
+                $val = $modelDetail->where(['data_id'=>$dataId,'step'=>$cur_step,'field_id'=>$fid])->value('val');
+            }
             if($field['is_require']){
                 if(!$file || !isset($file['name'][$fid]) || $file['size'][$fid] < 1  ){
+                    if($val){
+                        unset($field_files[$fid]);
+                        continue;
+                    }
                     $error = $field['name'].'-文件不能为空';
                     break;
                 }
@@ -388,7 +398,7 @@ class ProjectData extends Controller
             return errorReturn($error);
         }
         $time = date('Y-m-d H:i:s');
-        $modelData = new ModelProjectData();
+        
         $user_id = $this->user_id ?: 0;
         $isComplete = $pInfo['steps'] <= $cur_step ? 1 : 0;
         if($dataId < 1){
@@ -418,8 +428,7 @@ class ProjectData extends Controller
             $modelData->where(['id'=>$dataId])->update($savedData);
         }
         if($dataId > 0){
-            
-            $modelDetail = new ProjectDataDetail();
+            $newDatas = [];
             if($fieldData){
                 foreach($fieldData as $fid => $val){
                     if(!is_array($val) && ($val === '' || $val === null) ){
@@ -430,14 +439,13 @@ class ProjectData extends Controller
                         'data_id' => $dataId,
                         'user_id' => $user_id,
                         'step' => $cur_step,
-                        'temp_id' => $fields[$fid]['temp_id'],
                         'field_id' => $fid,
+                        'temp_id' => $fields[$fid]['temp_id'],
                         'val' => $val
                     ];
-                    $modelDetail->create($tmp);
+                    $newDatas[] = $tmp;
                 }
             }
-          
             foreach($field_files as $fid => $item){
                 $tmp = [
                     'p_id' => $p_id,
@@ -449,7 +457,17 @@ class ProjectData extends Controller
                     'val' => $item['origin_name'],
                     'remark' => $item['saved_name'],
                 ];
-                $modelDetail->create($tmp);
+                $newDatas[] = $tmp;
+            }
+            if($newDatas){
+                foreach($newDatas as $iv){
+                    $detailid = $modelDetail->where(['data_id'=>$dataId,'step'=>$cur_step,'field_id'=>$iv['field_id']])->value('id');
+                    if($detailid > 0){
+                        $modelDetail->where(['id'=>$detailid])->update($iv);
+                    }else{
+                        $modelDetail->insertGetId($iv);
+                    }
+                }
             }
             $modelCheck = new ProjectDataCheck();
             if($cur_step > 1){ //通过时,把上一步改成审批通过
