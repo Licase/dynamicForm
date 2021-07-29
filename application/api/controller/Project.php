@@ -64,7 +64,7 @@ class Project extends Controller
     /**
      * 获取项目详情,用于设计项目流程
      */
-    function getDetail($uuid)
+    function getDesignDetail($uuid)
     {
         if (!$uuid) {
             exit('非法访问');
@@ -112,7 +112,7 @@ class Project extends Controller
         $tempsInfo = array_column($tempsInfo->toArray(),null,'id');
         $data['tempList'] = $tempsInfo;
 
-        $tempFields = $modelTemplateField->where(['temp_id'=>['in',$allTemps]])->field('id,temp_id,name,data_type,options,is_require')->order('temp_id asc,sort asc,id asc')->select();
+        $tempFields = $modelTemplateField->where(['temp_id'=>['in',$allTemps]])->field('id,temp_id,name,data_type as dataType,options,is_require')->order('temp_id asc,sort asc,id asc')->select();
     
         $fields = [];
         foreach($tempFields as $item){

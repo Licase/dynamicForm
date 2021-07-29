@@ -31,113 +31,11 @@
                                 {{$field.name}}：
                                 </label>
                             
-                                {{switch name="field.data_type"}}
-                                {{case value="$Think.DT_TEXT" break="1"}}
-                                <div class="col-sm-6">
-                                    <input class="col-xs-9 form-control" type="text" name="field[{{$field.id}}]" id="field_{{$field.id}}" maxlength="32" /> 
-                                {{/case}}
-                                {{case value="$Think.DT_NUMBER" break="1"}}
-                                <div class="col-sm-2">
-                                    <input class="col-xs-9 form-control" type="number" name="field[{{$field.id}}]" id="field_{{$field.id}}" maxlength="32" /> 
-                                {{/case}}
-                                {{case value="$Think.DT_DATE" break="1"}}
-                                <div class="col-sm-3">
-                                    <div class="input-group">
-                                    <input id="date-timepicker_{{$field.id}}" name="field[{{$field.id}}]" type="text" class="form-control">
-                                    <span class="input-group-addon">
-                                        <i class="fa fa-clock-o bigger-110"></i>
-                                    </span>
-                                    <script>
-                                        $(function(){
-                                            $('#date-timepicker_{{$field.id}}').datetimepicker({
-                                        format: 'YYYY-MM-DD H:mm:ss',//use this option to display seconds
-                                        icons: {
-                                            time: 'fa fa-clock-o',
-                                            date: 'fa fa-calendar',
-                                            up: 'fa fa-chevron-up',
-                                            down: 'fa fa-chevron-down',
-                                            previous: 'fa fa-chevron-left',
-                                            next: 'fa fa-chevron-right',
-                                            today: 'fa fa-arrows ',
-                                            clear: 'fa fa-trash',
-                                            close: 'fa fa-times'
-                                        }
-                                        }).next().on(ace.click_event, function(){
-                                            $(this).prev().focus();
-                                        });
-                                        });
-                                    </script>
-                                    </div>
-                                {{/case}}
-                                {{case value="$Think.DT_RADIO" break="1"}}
-                                <div class="col-sm-6">
-                                <div class="radio">
-                                <?php
-                                    if($field['options']){
-                                        $vals = explode('|',$field['options']);
-                                        $f= true;
-                                        foreach($vals as $v){
-                                            if(trim($v) == ''){
-                                                continue;
-                                            }
-                                            echo '<label>
-                                                    <input name="field['.$field['id'].']" '.($f ? 'checked' : '').' type="radio" value="'.$v.'" class="ace">
-                                                    <span class="lbl">'.$v.'</span>
-                                                </label>';
-                                            $f = false;
-                                        }
-                                    }
-                                ?>
-                                </div>
-                                {{/case}}
-                                {{case value="$Think.DT_CHECKBOX" break="1"}}
-                                <div class="col-sm-6">
-                                <div class="checkbox">
-                                    <?php
-                                        if($field['options']){
-                                            $vals = explode('|',$field['options']);
-                                            foreach($vals as $v){
-                                                if(trim($v) == ''){
-                                                    continue;
-                                                }
-                                                echo '<label>
-                                                        <input name="field['.$field['id'].'][]" type="checkbox" value="'.$v.'" class="ace">
-                                                        <span class="lbl">'.$v.'</span>
-                                                    </label>';
-                                            }
-                                        }
+                                <div class="col-sm-4">   
+                                    <?php 
+                                    echo getFieldText($field['dataType'],$field,'write');
                                     ?>
-                                    </div>
-                                {{/case}}
-                                {{case value="$Think.DT_SELECT" break="1"}}
-                                <div class="col-sm-4">
-                                <select class="form-control" id="field[{{$field.id}}]">
-                                    <option value="">请选择</option>
-                                <?php
-                                    if($field['options']){
-                                        $vals = explode('|',$field['options']);
-                                        foreach($vals as $v){
-                                            if(trim($v) == ''){
-                                                continue;
-                                            }
-                                            echo '<option value="'.$v.'">'.$v.'</option>';
-                                        }
-                                    }
-                                ?>
-                                </select>
-                                {{/case}}
-                                {{case value="$Think.DT_FILE" break="1"}}
-                                <div class="col-sm-4">
-                                    <input class="col-xs-9 form-control" type="file" name="field[{{$field.id}}]" id="field_{{$field.id}}" /> 
-                                {{/case}}
-                                {{case value="$Think.DT_TEXTAREA" break="1"}}
-                                <div class="col-sm-4">
-                                <textarea name="field[{{$field.id}}]" value="" id="field_{{$field.id}}" class="col-xs-10" rows="4"
-                                            style="overflow: hidden; word-wrap: break-word;"></textarea>
-                                {{/case}}
-                                {{/switch}}
-                                
-                            </div>
+                                </div>
                         </div>
                         <div class="space-4"></div>
                     {{/volist}}

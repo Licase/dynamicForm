@@ -200,6 +200,7 @@ class ProjectDataCheck extends Controller
                 $tempInfos[$flow['step']][] = $tempInfo[$tid];
             }
         }
+        $data['tempInfos'] = $tempInfos;
         $data['hasCheck'] = $hasCheck;
         $data['checkInfo'] = $checkInfo;
       
@@ -241,7 +242,7 @@ class ProjectDataCheck extends Controller
 
         $data['dataId'] = $id;
         $data['user_id'] = $this->user_id;
-        $data['tempInfos'] = $tempInfos;
+
         $data['tempFields'] = $tempFields;
         return $this->view->fetch('proCheck/view',$data);
 

@@ -93,8 +93,6 @@ class ProjectPublic extends Controller
         return $this->view->fetch('public/list', $data);
     }
 
-   
-
     //添加数据
     function add($uuid){
         
@@ -107,25 +105,10 @@ class ProjectPublic extends Controller
         $data['proInfo'] = $pInfo;
         $p_id = $pInfo['id'];
       
-        
         $data['uuid'] = $uuid;
-        
-        $modelFlow = new ProjectFlow();
-        $flowInfo = $modelFlow->where(['p_id'=>$p_id])->field('temps,step')->order('step')->select();
-
         $data['has_check'] = false;
-        $tempInfo = (new Template())->where(['id'=>['in',$pInfo['temps']]])->field('id,name')->select();
-        $tempInfo = array_column($tempInfo->toArray(),null,'id');
 
-        $temps = [];
-        foreach($flowInfo as $flow){
-            $t = explode(',',$flow['temps']);
-            foreach($t as $tid){
-                $temps[$flow['step']][] = $tempInfo[$tid];
-            }
-        }
-        unset($tempInfo);
-        $data['flowInfo'] = $temps;
+        $data['flowInfo'] = (new ProjectFlow())->getProjectTemps($p_id,$pInfo['temps']);
 
         $tempFields = (new TemplateField())->where(['temp_id'=>['in',$pInfo['temps']]])
                             ->field('id,temp_id,name,data_type as dataType,options,is_require')

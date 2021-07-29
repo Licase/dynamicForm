@@ -16,7 +16,7 @@ Route::group('api',function(){
         Route::put('/template/:id','api/Template/update');
         Route::post('/template','api/Template/save');
         Route::delete('/template','api/Template/del');
-        Route::get('/template/design/:id','api/Template/getDetail');
+        Route::get('/template/design/:id','api/Template/getDesignDetail');
         Route::get('/templateField/:id$','api/TemplateField/read');
         Route::post('/templateField$','api/TemplateField/save');
         Route::put('/templateField/:id$','api/TemplateField/update');
@@ -28,7 +28,7 @@ Route::group('api',function(){
         Route::put('/project/:uuid','api/Project/update');
         Route::post('/project$','api/Project/save');
         Route::delete('/project$','api/Project/updateStatus');
-        Route::get('/project/design/:uuid$','api/Project/getDetail');
+        Route::get('/project/design/:uuid$','api/Project/getDesignDetail');
         Route::post('/project/flow$','api/Project/addFlow');
         Route::delete('/project/flow$','api/Project/delFlow');
 

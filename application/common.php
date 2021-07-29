@@ -310,16 +310,17 @@ function getFieldText($dataType,$fieldInfo,$showType='read',$disable = 0){
         return $html;
     }
 
+    $disableTxt = 'disabled="true"';
     switch($dataType){
         case DT_TEXT:
-            $html = '<input class="form-control" '.($disable ? 'disabled' : '').' type="text" name="field['.$fieldId.']" id="field_'.$fieldId.'" value="'.$value.'" maxlength="32" /> ';
+            $html = '<input class="form-control" '.($disable ? $disableTxt : '').' type="text" name="field['.$fieldId.']" id="field_'.$fieldId.'" value="'.$value.'" maxlength="32" /> ';
             break;
         case DT_NUMBER:
-            $html = '<input class="form-control" '.($disable ? 'disabled' : '').' type="number" name="field['.$fieldId.']" id="field_'.$fieldId.'" value="'.$value.'" maxlength="32" /> ';
+            $html = '<input class="form-control" '.($disable ? $disableTxt : '').' type="number" name="field['.$fieldId.']" id="field_'.$fieldId.'" value="'.$value.'" maxlength="32" /> ';
             break;
         case DT_DATE:
             $html = '<div class="input-group">
-            <input class="form-control"  id="field_'.$fieldId.'" name="field['.$fieldId.']" type="text" '.($disable ? 'disabled' : '').'  value="'.$value.'">
+            <input class="form-control"  id="field_'.$fieldId.'" name="field['.$fieldId.']" type="text" '.($disable ? $disableTxt : '').'  value="'.$value.'">
             <span class="input-group-addon">
                 <i class="fa fa-clock-o bigger-110"></i>
             </span>
@@ -356,7 +357,7 @@ function getFieldText($dataType,$fieldInfo,$showType='read',$disable = 0){
                         continue;
                     }
                     $html .= '<label>
-                            <input name="field['.$fieldId.']" '.($value == $v ? 'checked' : '').' type="radio" '.($disable ? 'disabled' : '').'  value="'.$v.'" class="ace">
+                            <input name="field['.$fieldId.']" '.($value == $v ? 'checked' : '').' type="radio" '.($disable ? $disableTxt : '').'  value="'.$v.'" class="ace">
                             <span class="lbl">'.$v.'</span>
                         </label>';
                 }
@@ -374,7 +375,7 @@ function getFieldText($dataType,$fieldInfo,$showType='read',$disable = 0){
                         continue;
                     }
                     $html .= '<label>
-                            <input name="field['.$fieldId.'][]" '.(in_array($v,$selected) ? 'checked' : '').' type="checkbox" '.($disable ? 'disabled' : '').'  value="'.$v.'" class="ace">
+                            <input name="field['.$fieldId.'][]" '.(in_array($v,$selected) ? 'checked' : '').' type="checkbox" '.($disable ? $disableTxt : '').'  value="'.$v.'" class="ace">
                             <span class="lbl">'.$v.'</span>
                         </label>';
                 }
@@ -382,7 +383,7 @@ function getFieldText($dataType,$fieldInfo,$showType='read',$disable = 0){
             $html .= '</div>';
             break;
         case DT_SELECT:
-            $html = '<select class="form-control" '.($disable ? 'disabled' : '').'  name="field['.$fieldId.']" id="field_'.$fieldId.'">';
+            $html = '<select class="form-control" '.($disable ? $disableTxt : '').'  name="field['.$fieldId.']" id="field_'.$fieldId.'">';
             $html .= '<option value="">请选择</option>';
     
             if(isset($fieldInfo['options'])  && $fieldInfo['options']){
@@ -399,10 +400,10 @@ function getFieldText($dataType,$fieldInfo,$showType='read',$disable = 0){
         $html .= '</select>';
             break;
         case DT_FILE:
-            $html = '<input class="form-control" type="file" name="field['.$fieldId.']" '.($disable ? 'disabled' : '').'  value="" id="field_'.$fieldId.'" />'.$value ;
+            $html = '<input class="form-control" type="file" name="field['.$fieldId.']" '.($disable ? $disableTxt : '').'  value="" id="field_'.$fieldId.'" />'.$value ;
             break;
         case DT_TEXTAREA:
-            $html = '<textarea name="field['.$fieldId.']" value="'.$value.'" id="field_'.$fieldId.'" '.($disable ? 'disabled' : '').' class="col-xs-10" rows="3"
+            $html = '<textarea name="field['.$fieldId.']" value="'.$value.'" id="field_'.$fieldId.'" '.($disable ? $disableTxt : '').' class="col-xs-10" rows="3"
             style="overflow: hidden; word-wrap: break-word;"></textarea>';
             break;
         default:

@@ -57,7 +57,7 @@ class Template extends Controller
     /**
      * 获取模板详情,用于编辑与预览
      */
-    function getDetail($id)
+    function getDesignDetail($id)
     {
         if (!$id) {
             exit('非法访问');
@@ -69,7 +69,7 @@ class Template extends Controller
         }
 
         $model = new TemplateField();
-        $list = $model->where(['temp_id' => $id])->order('sort asc,id asc')->select();
+        $list = $model->where(['temp_id' => $id])->field('id,temp_id,name,data_type as dataType,options,is_require,is_sort,is_filter')->order('sort asc,id asc')->select();
 
         $data['dataType'] = Config::get('dataType');
         $data['info'] = $info;
