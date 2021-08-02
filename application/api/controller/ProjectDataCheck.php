@@ -241,7 +241,7 @@ class ProjectDataCheck extends Controller
         $data['auditUser'] =  (new Admin())->getAuthUsers($proInfo['admin_roles']);
 
         $data['dataId'] = $id;
-        $data['user_id'] = $this->user_id;
+        $data['userId'] = $this->user_id;
 
         $data['tempFields'] = $tempFields;
         return $this->view->fetch('ProCheck/view',$data);
