@@ -54,7 +54,7 @@ class Admin extends Controller
 
         $data['name'] = $name;
 
-        return $this->view->fetch('list', $data);
+        return $this->view->fetch('Admin/list', $data);
     }
         /**
      * 获取管理员信息
