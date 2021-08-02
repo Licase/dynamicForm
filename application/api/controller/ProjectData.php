@@ -276,7 +276,8 @@ class ProjectData extends Controller
         //获取流程信息，模板信息，验证数据有效
         $modelFlow = new ProjectFlow();
         $flowInfo = $modelFlow->where(['p_id'=>$p_id,'step'=>$cur_step])->field('temps,has_check')->find();
-        if($flowInfo['has_check'] && $check_user < 1){
+    
+        if($pInfo['steps'] > $cur_step && $flowInfo['has_check'] && $check_user < 1){
             return errorReturn('请选择审批人');
         }
 

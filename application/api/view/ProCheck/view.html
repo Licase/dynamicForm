@@ -165,7 +165,7 @@
                     $msg[$key] = $item['name'] .'不能为空';
                 }
             }
-            if($hasCheck){
+            if($proInfo['steps'] > $curStep && $hasCheck){
                 $key = 'check_user';
                 $rules[$key] = ['required'=> true];
                 $msg[$key] = '请选择审批人';
