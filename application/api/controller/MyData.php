@@ -236,7 +236,7 @@ class MyData extends Controller
         $data['isOwn'] = 1;
         $data['tempInfos'] = $tempInfos;
         $data['tempFields'] = $tempFields;
-        return $this->view->fetch('proCheck/view',$data);
+        return $this->view->fetch('ProCheck/view',$data);
 
     }
 

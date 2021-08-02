@@ -244,7 +244,7 @@ class ProjectDataCheck extends Controller
         $data['user_id'] = $this->user_id;
 
         $data['tempFields'] = $tempFields;
-        return $this->view->fetch('proCheck/view',$data);
+        return $this->view->fetch('ProCheck/view',$data);
 
     }
     //驳回数据
